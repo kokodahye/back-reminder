@@ -805,6 +805,13 @@
         updateTimerUI();
         updateSyncUI();
 
+        // 건강 기록 UI 새로고침
+        try {
+          if (!document.getElementById('healthView').classList.contains('hidden')) {
+            loadTodayCheckUI();
+          }
+        } catch (e) { /* 초기 로드 시 무시 */ }
+
         isSyncing = false;
       }
     });
