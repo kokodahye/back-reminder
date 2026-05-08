@@ -35,6 +35,7 @@
   let syncListener = null;
   let syncCode = null;
   let isSyncing = false;
+  let healthSyncTimer = null;
 
   // --- State ---
   let settings = loadSettings();
@@ -777,6 +778,27 @@
           saveSettings();
         }
 
+        // 건강 기록 동기화 (병합)
+        if (data.healthRecords) {
+          try {
+            const localRecords = loadHealthRecords();
+            const remoteRecords = data.healthRecords;
+            const merged = { ...localRecords };
+            Object.keys(remoteRecords).forEach((key) => {
+              const remote = remoteRecords[key];
+              const local = localRecords[key];
+              if (!local) {
+                merged[key] = remote;
+              } else {
+                if ((remote.savedAt || 0) > (local.savedAt || 0)) {
+                  merged[key] = remote;
+                }
+              }
+            });
+            localStorage.setItem(HEALTH_STORAGE_KEY, JSON.stringify(merged));
+          } catch (e) { /* ignore */ }
+        }
+
         localStorage.setItem('backTimerSyncTS', String(remoteTimestamp));
         saveSittingState();
         updateSittingUI();
@@ -806,6 +828,7 @@
       },
       history: loadHistory(),
       settings: settings,
+      healthRecords: loadHealthRecords(),
       lastUpdated: now
     };
 
@@ -930,6 +953,10 @@
     try {
       localStorage.setItem(HEALTH_STORAGE_KEY, JSON.stringify(records));
     } catch (e) { /* storage full */ }
+    if (syncRef && !isSyncing) {
+      clearTimeout(healthSyncTimer);
+      healthSyncTimer = setTimeout(() => pushToFirebase(), 2000);
+    }
   }
 
   function getSelectedRecord() {
