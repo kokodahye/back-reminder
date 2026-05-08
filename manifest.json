@@ -1,0 +1,18 @@
+{
+  "name": "허리 알리미",
+  "short_name": "허리알리미",
+  "description": "허리디스크 관리를 위한 활동/휴식 타이머",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f6f1",
+  "theme_color": "#99cc66",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

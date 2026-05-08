@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="허리알리미">
+  <meta name="theme-color" content="#99cc66">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+  <title>허리 알리미</title>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header>
+      <h1 id="headerTitle">허리 알리미</h1>
+      <button id="settingsBtn" class="icon-btn" aria-label="설정">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Timer View -->
+    <main id="timerView" class="view">
+      <div id="timerContainer">
+        <div id="timerRing">
+          <svg viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="90" class="ring-bg"/>
+            <circle cx="100" cy="100" r="90" class="ring-progress" id="progressRing"/>
+          </svg>
+          <div id="timerContent">
+            <span id="phaseLabel">준비</span>
+            <span id="timerDisplay">40:00</span>
+            <span id="cycleCount"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button id="actionBtn" class="action-btn">시작</button>
+
+      <!-- Sitting Time -->
+      <div id="sittingInfo">
+        <div class="sitting-row">
+          <span class="sitting-label">오늘 앉은 시간</span>
+          <span id="sittingTime" class="sitting-value">0시간 0분</span>
+        </div>
+        <div class="sitting-bar-container">
+          <div id="sittingBar" class="sitting-bar"></div>
+        </div>
+        <div class="sitting-row">
+          <span class="sitting-sub">제한</span>
+          <span id="sittingLimit" class="sitting-sub">5시간</span>
+        </div>
+        <button id="historyBtn" class="history-btn">기록 보기</button>
+      </div>
+
+    <!-- History Panel -->
+    <div id="historyOverlay" class="overlay hidden">
+      <div class="settings-panel">
+        <div class="settings-header">
+          <h2>앉은 시간 기록</h2>
+          <button id="historyClose" class="icon-btn" aria-label="닫기">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </div>
+    </div>
+    </main>
+
+    <!-- Health View (새 기능: 허리 상태 기록 & 그래프) -->
+    <main id="healthView" class="view hidden">
+      <!-- Sub-tab toggle -->
+      <div class="health-subtabs">
+        <button class="health-subtab active" data-subtab="check">오늘 체크</button>
+        <button class="health-subtab" data-subtab="graph">그래프</button>
+      </div>
+
+      <!-- Today Check Section -->
+      <section id="checkSection" class="health-section">
+        <div class="check-card">
+          <div class="check-date-row">
+            <div class="check-date" id="checkDateLabel">오늘</div>
+            <button id="dateEditBtn" class="date-edit-btn">날짜수정</button>
+          </div>
+          <div class="check-pain-display">
+            <div class="pain-score-big" id="painScoreBig">7</div>
+            <div class="pain-score-label" id="painScoreLabel">괜찮음</div>
+          </div>
+          <input type="range" id="painScoreRange" min="0" max="10" step="1" value="7" class="pain-slider">
+          <div class="pain-scale">
+            <span>아주 아픔</span>
+            <span>아주 좋음</span>
+          </div>
+        </div>
+
+        <div class="check-card">
+          <div class="check-section-title">활동 기록</div>
+          <div id="activityList" class="activity-list"></div>
+          <button id="addActivityBtn" class="add-activity-btn">+ 활동 추가</button>
+        </div>
+
+        <div class="check-card">
+          <div class="check-section-title">건강 상태</div>
+          <label class="check-toggle">
+            <span>생리 중</span>
+            <input type="checkbox" id="periodCheck">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="check-card">
+          <div class="check-section-title">메모 (선택)</div>
+          <textarea id="checkNote" class="check-note" placeholder="오늘의 컨디션을 자유롭게 적어보세요" rows="3"></textarea>
+        </div>
+
+        <button id="saveCheckBtn" class="action-btn save-check-btn">저장</button>
+        <div id="saveCheckMsg" class="save-msg"></div>
+      </section>
+
+      <!-- Graph Section -->
+      <section id="graphSection" class="health-section hidden">
+        <!-- Period selector -->
+        <div class="period-pill">
+          <button class="period-btn active" data-period="weekly">주간</button>
+          <button class="period-btn" data-period="monthly">월간</button>
+          <button class="period-btn" data-period="yearly">연간</button>
+        </div>
+
+        <!-- Date range navigator -->
+        <div class="date-nav">
+          <button id="datePrev" class="date-nav-btn" aria-label="이전">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span id="dateRangeLabel" class="date-range-label">5월 1일 ~ 5월 7일</span>
+          <button id="dateNext" class="date-nav-btn" aria-label="다음">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
+        <!-- Pain Score Chart -->
+        <div class="chart-card" id="painChartCard">
+          <div class="chart-header">
+            <span class="chart-title" id="chartTitle">허리 상태 <span class="chart-title-sub">(0~10점)</span></span>
+            <span class="chart-avg" id="chartAvg">평균 <strong>0</strong> 점</span>
+          </div>
+          <div id="chartContainer" class="chart-container">
+            <svg id="chartSvg" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet"></svg>
+            <div id="chartEmpty" class="chart-empty hidden">기록이 없습니다.<br>오늘 체크를 먼저 입력해보세요.</div>
+          </div>
+        </div>
+
+        <!-- Activity stacked chart -->
+        <div class="chart-card" id="activityBreakdownCard">
+          <div class="chart-header">
+            <span class="chart-title">활동 시간 <span class="chart-title-sub">(시간)</span></span>
+          </div>
+          <div class="stacked-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#D4A843"></span>앉은 시간</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#5B9BD5"></span>걸은 시간</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#E8913A"></span>운동 시간</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#D46A6A"></span>휴식 시간</span>
+          </div>
+          <div class="chart-container stacked-chart-container">
+            <svg id="stackedChartSvg" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+          <div class="cat-summary" id="catSummary"></div>
+        </div>
+
+        <!-- Activity daily average (월간/연간에만 표시) -->
+        <div class="chart-card" id="activityAvgCard" style="display:none;">
+          <div class="chart-header">
+            <span class="chart-title">활동 평균 <span class="chart-title-sub">(일 평균)</span></span>
+          </div>
+          <div class="avg-grid">
+            <div class="avg-item">
+              <div class="avg-icon" style="background:#faf0d4;">🪑</div>
+              <div class="avg-label">앉은 시간</div>
+              <div class="avg-value" id="avgSit" style="color:#D4A843">0 시간</div>
+            </div>
+            <div class="avg-item">
+              <div class="avg-icon" style="background:#deedf8;">🚶</div>
+              <div class="avg-label">걸은 시간</div>
+              <div class="avg-value" id="avgWalk" style="color:#5B9BD5">0 시간</div>
+            </div>
+            <div class="avg-item">
+              <div class="avg-icon" style="background:#fce8d4;">💪</div>
+              <div class="avg-label">운동 시간</div>
+              <div class="avg-value" id="avgExercise" style="color:#E8913A">0 시간</div>
+            </div>
+            <div class="avg-item">
+              <div class="avg-icon" style="background:#f8e0e0;">😴</div>
+              <div class="avg-label">휴식 시간</div>
+              <div class="avg-value" id="avgRest" style="color:#D46A6A">0 시간</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent records -->
+        <div class="chart-card">
+          <div class="chart-title">최근 기록</div>
+          <div id="recentRecords" class="recent-records"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Activity Add Modal -->
+    <div id="activityModal" class="overlay hidden">
+      <div class="settings-panel">
+        <div class="settings-header">
+          <h2>활동 추가</h2>
+          <button id="activityModalClose" class="icon-btn" aria-label="닫기">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="setting-group">
+          <label>활동 종류</label>
+          <div class="activity-type-grid" id="activityTypeGrid">
+            <button class="activity-type-btn" data-type="앉은 시간">🪑 앉은 시간</button>
+            <button class="activity-type-btn" data-type="걷기">🚶 걷기</button>
+            <button class="activity-type-btn" data-type="스트레칭">🧘 스트레칭</button>
+            <button class="activity-type-btn" data-type="맨손체조">🤸 맨손체조</button>
+            <button class="activity-type-btn" data-type="MST체조">💪 MST체조</button>
+            <button class="activity-type-btn" data-type="근력운동">🏋️ 근력운동</button>
+            <button class="activity-type-btn" data-type="유산소">🏃 유산소</button>
+            <button class="activity-type-btn" data-type="휴식">😴 휴식</button>
+            <button class="activity-type-btn" data-type="기타">✏️ 기타</button>
+          </div>
+        </div>
+        <div class="setting-group" id="customTypeGroup" style="display:none;">
+          <label>활동 이름 직접 입력</label>
+          <input type="text" id="customTypeInput" placeholder="예: 필라테스" class="custom-input">
+        </div>
+        <div class="setting-group">
+          <label>시간 (분)</label>
+          <div class="stepper">
+            <button class="stepper-btn" id="actMinDown5">-5</button>
+            <button class="stepper-btn" id="actMinDown1">-1</button>
+            <span id="actMinValue">30</span>
+            <button class="stepper-btn" id="actMinUp1">+1</button>
+            <button class="stepper-btn" id="actMinUp5">+5</button>
+          </div>
+        </div>
+        <button id="activitySaveBtn" class="action-btn">추가</button>
+      </div>
+    </div>
+
+    <!-- Calendar Modal -->
+    <div id="calendarModal" class="overlay hidden">
+      <div class="settings-panel">
+        <div class="settings-header">
+          <h2>날짜 선택</h2>
+          <button id="calendarClose" class="icon-btn" aria-label="닫기">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="calendar-nav">
+          <button id="calMonthPrev" class="cal-nav-btn" aria-label="이전 달">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span id="calMonthLabel" class="cal-month-label">2024년 5월</span>
+          <button id="calMonthNext" class="cal-nav-btn" aria-label="다음 달">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <div class="cal-weekdays">
+          <span class="cal-weekday">일</span>
+          <span class="cal-weekday">월</span>
+          <span class="cal-weekday">화</span>
+          <span class="cal-weekday">수</span>
+          <span class="cal-weekday">목</span>
+          <span class="cal-weekday">금</span>
+          <span class="cal-weekday">토</span>
+        </div>
+        <div id="calDays" class="cal-grid"></div>
+        <button id="calTodayBtn" class="cal-today-btn">오늘로 돌아가기</button>
+      </div>
+    </div>
+
+    <!-- Bottom Tab Navigation -->
+    <nav id="bottomTabs">
+      <button class="tab-btn active" data-view="timer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/><path d="M5 5l1.5 1.5"/>
+        </svg>
+        <span>타이머</span>
+      </button>
+      <button class="tab-btn" data-view="health">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12h4l2-6 4 12 2-6h6"/>
+        </svg>
+        <span>허리 기록</span>
+      </button>
+    </nav>
+
+    <!-- Settings Panel -->
+    <div id="settingsOverlay" class="overlay hidden">
+      <div class="settings-panel">
+        <div class="settings-header">
+          <h2>설정</h2>
+          <button id="settingsClose" class="icon-btn" aria-label="닫기">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="setting-group">
+          <label>활동 시간 (분)</label>
+          <div class="stepper">
+            <button class="stepper-btn" data-target="activityMin" data-delta="-5">-5</button>
+            <span id="activityMin">40</span>
+            <button class="stepper-btn" data-target="activityMin" data-delta="5">+5</button>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label>휴식 시간 (분)</label>
+          <div class="stepper">
+            <button class="stepper-btn" data-target="restMin" data-delta="-1">-1</button>
+            <span id="restMin">5</span>
+            <button class="stepper-btn" data-target="restMin" data-delta="1">+1</button>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label>앉은 시간 제한 (시간)</label>
+          <input type="range" id="sittingLimitRange" min="5" max="8" step="0.5" value="5">
+          <span id="sittingLimitLabel">5시간</span>
+        </div>
+
+        <div class="setting-group">
+          <label>일과 시작</label>
+          <input type="time" id="scheduleStart" value="09:00">
+        </div>
+
+        <div class="setting-group">
+          <label>일과 종료</label>
+          <input type="time" id="scheduleEnd" value="00:00">
+        </div>
+
+        <div class="setting-group">
+          <label>알림</label>
+          <button id="notifPermBtn" class="secondary-btn">알림 허용하기</button>
+          <span id="notifStatus" class="notif-status"></span>
+        </div>
+
+        <div class="setting-group">
+          <label>기기 동기화</label>
+          <div id="syncSection">
+            <div id="syncNotConnected">
+              <p style="font-size:13px;color:var(--text-sub);margin-bottom:12px;line-height:1.5;">
+                PC와 아이폰에서 같은 코드를 입력하면<br>앉은 시간이 자동으로 동기화됩니다.
+              </p>
+              <button id="syncNewBtn" class="secondary-btn" style="margin-bottom:8px;">새 동기화 코드 생성</button>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="syncCodeInput" placeholder="코드 입력" maxlength="6"
+                  style="flex:1;font-size:18px;padding:10px 14px;border:1px solid #ddd;border-radius:12px;
+                  text-align:center;letter-spacing:4px;text-transform:uppercase;color:var(--text);background:var(--bg);">
+                <button id="syncJoinBtn" class="secondary-btn" style="width:auto;padding:12px 16px;">연결</button>
+              </div>
+            </div>
+            <div id="syncConnected" style="display:none;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg);border-radius:12px;margin-bottom:8px;">
+                <span style="font-size:13px;color:var(--text-sub);">동기화 코드</span>
+                <span id="syncCodeDisplay" style="font-size:20px;font-weight:700;letter-spacing:3px;color:var(--primary);"></span>
+              </div>
+              <span id="syncStatus" style="display:block;font-size:12px;color:var(--text-sub);margin-bottom:8px;">연결됨</span>
+              <button id="syncDisconnectBtn" class="secondary-btn danger">동기화 해제</button>
+            </div>
+          </div>
+        </div>
+
+        <button id="resetDayBtn" class="secondary-btn danger">오늘 앉은 시간 초기화</button>
+      </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="overlay hidden">
+      <div class="alert-box">
+        <div id="alertIcon" class="alert-icon">⏰</div>
+        <h2 id="alertTitle">시간이 되었습니다!</h2>
+        <p id="alertMessage"></p>
+        <button id="alertBtn" class="action-btn">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
