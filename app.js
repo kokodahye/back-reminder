@@ -1084,8 +1084,8 @@
 
   // ---- Activity Modal ----
   function openActivityModal() {
-    activityModalState = { selectedType: null, customName: '', minutes: 30 };
-    $('actMinValue').textContent = '30';
+    activityModalState = { selectedType: null, customName: '' };
+    $('actMinInput').value = '30';
     $('customTypeGroup').style.display = 'none';
     $('customTypeInput').value = '';
     document.querySelectorAll('.activity-type-btn').forEach((b) => b.classList.remove('selected'));
@@ -1111,7 +1111,7 @@
       }
       finalType = custom;
     }
-    const minutes = activityModalState.minutes;
+    const minutes = parseInt($('actMinInput').value) || 0;
     if (minutes <= 0) return;
 
     const today = getSelectedRecord();
@@ -1610,16 +1610,6 @@
         $('customTypeGroup').style.display = btn.dataset.type === '기타' ? '' : 'none';
       });
     });
-
-    // 분 stepper
-    const setMin = (delta) => {
-      activityModalState.minutes = Math.max(1, Math.min(720, activityModalState.minutes + delta));
-      $('actMinValue').textContent = activityModalState.minutes;
-    };
-    $('actMinDown5').addEventListener('click', () => setMin(-5));
-    $('actMinDown1').addEventListener('click', () => setMin(-1));
-    $('actMinUp1').addEventListener('click', () => setMin(1));
-    $('actMinUp5').addEventListener('click', () => setMin(5));
 
     $('activitySaveBtn').addEventListener('click', commitActivity);
 
