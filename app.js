@@ -235,20 +235,40 @@
 
   function startCountdown(totalSeconds, onTick, onEnd) {
     clearInterval(state.intervalId);
-    const startTime = Date.now();
+    state.countdownStart = Date.now();
+    state.countdownTotal = totalSeconds;
+    state.countdownOnEnd = onEnd;
     state.remainingSeconds = totalSeconds;
     updateTimerUI();
 
     state.intervalId = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      state.remainingSeconds = Math.max(0, totalSeconds - elapsed);
+      const elapsed = Math.floor((Date.now() - state.countdownStart) / 1000);
+      state.remainingSeconds = Math.max(0, state.countdownTotal - elapsed);
       onTick();
       if (state.remainingSeconds <= 0) {
         clearInterval(state.intervalId);
+        state.intervalId = null;
         onEnd();
       }
     }, 250);
   }
+
+  // 백그라운드 복귀 시 타이머 즉시 갱신
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.intervalId && state.countdownStart) {
+      const elapsed = Math.floor((Date.now() - state.countdownStart) / 1000);
+      state.remainingSeconds = Math.max(0, state.countdownTotal - elapsed);
+      updateTimerUI();
+      if (state.remainingSeconds <= 0) {
+        clearInterval(state.intervalId);
+        state.intervalId = null;
+        if (state.countdownOnEnd) {
+          state.countdownOnEnd();
+          state.countdownOnEnd = null;
+        }
+      }
+    }
+  });
 
   function startActivity() {
     state.phase = 'activity';
@@ -826,22 +846,54 @@
     if (!syncRef || isSyncing) return;
     isSyncing = true;
 
-    const now = Date.now();
-    const data = {
-      sitting: {
-        totalSittingSeconds: state.totalSittingSeconds,
-        cycles: state.cycles,
-        dayKey: state.dayKey
-      },
-      history: loadHistory(),
-      settings: settings,
-      healthRecords: loadHealthRecords(),
-      lastUpdated: now
-    };
+    // 원격 데이터를 먼저 읽고 병합 후 업로드 (덮어쓰기 방지)
+    syncRef.once('value').then((snapshot) => {
+      const remote = snapshot.val() || {};
+      const now = Date.now();
 
-    syncRef.set(data).then(() => {
-      localStorage.setItem('backTimerSyncTS', String(now));
-      isSyncing = false;
+      // 건강 기록 병합
+      const localHealth = loadHealthRecords();
+      const remoteHealth = remote.healthRecords || {};
+      const mergedHealth = { ...remoteHealth };
+      Object.keys(localHealth).forEach((key) => {
+        const loc = localHealth[key];
+        const rem = remoteHealth[key];
+        if (!rem || (loc.savedAt || 0) >= (rem.savedAt || 0)) {
+          mergedHealth[key] = loc;
+        }
+      });
+
+      // 히스토리 병합
+      const localHistory = loadHistory();
+      const remoteHistory = remote.history || {};
+      const mergedHistory = { ...remoteHistory, ...localHistory };
+      Object.keys(remoteHistory).forEach((key) => {
+        if (localHistory[key]) {
+          mergedHistory[key] = Math.max(localHistory[key], remoteHistory[key]);
+        }
+      });
+      const histKeys = Object.keys(mergedHistory).sort();
+      while (histKeys.length > 30) delete mergedHistory[histKeys.shift()];
+
+      const data = {
+        sitting: {
+          totalSittingSeconds: state.totalSittingSeconds,
+          cycles: state.cycles,
+          dayKey: state.dayKey
+        },
+        history: mergedHistory,
+        settings: settings,
+        healthRecords: mergedHealth,
+        lastUpdated: now
+      };
+
+      return syncRef.set(data).then(() => {
+        localStorage.setItem('backTimerSyncTS', String(now));
+        // 병합된 데이터를 로컬에도 반영
+        localStorage.setItem(HEALTH_STORAGE_KEY, JSON.stringify(mergedHealth));
+        localStorage.setItem('backTimerHistory', JSON.stringify(mergedHistory));
+        isSyncing = false;
+      });
     }).catch(() => {
       isSyncing = false;
     });
@@ -1701,6 +1753,17 @@
 
     // 허리 기록 기능 초기화
     setupHealthListeners();
+
+    // 홈 화면 추가 안내 (PWA 미설치 시)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const installDismissed = localStorage.getItem('installBannerDismissed');
+    if (!isStandalone && !installDismissed) {
+      $('installBanner').classList.remove('hidden');
+    }
+    $('installDismiss').addEventListener('click', () => {
+      $('installBanner').classList.add('hidden');
+      localStorage.setItem('installBannerDismissed', '1');
+    });
   }
 
   init();

@@ -526,6 +526,40 @@ input[type="time"] {
   }
 }
 
+/* Install Banner */
+.install-banner {
+  background: #eaf2e4;
+  border: 1px solid var(--primary);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.install-banner.hidden {
+  display: none;
+}
+
+.install-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.install-dismiss {
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
 /* ============================================
    Health View (허리 기록)
    ============================================ */
