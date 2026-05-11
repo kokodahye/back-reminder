@@ -1341,32 +1341,8 @@
 
     // 스택 차트 + 합계
     renderActivityBreakdown(allPoints);
-    renderCatSummary(allPoints);
     renderRecentRecords(allPoints);
     renderActivityAverage(allPoints);
-  }
-
-  function renderCatSummary(points) {
-    const totals = { '앉은 시간': 0, '걸은 시간': 0, '운동한 시간': 0, '휴식한 시간': 0 };
-    points.forEach((p) => {
-      const recs = p.records || (p.record ? [p.record] : []);
-      recs.forEach((r) => {
-        if (!r) return;
-        const c = categorizeRecord(r);
-        BAR_CATEGORIES.forEach((cat) => { totals[cat] += c[cat]; });
-      });
-    });
-    const CAT_LABELS = ['앉은 시간', '걸은 시간', '운동', '휴식'];
-    const fmtMin = (m) => {
-      if (m >= 60) return `${Math.floor(m / 60)}h ${m % 60}m`;
-      return `${m}분`;
-    };
-    $('catSummary').innerHTML = BAR_CATEGORIES.map((cat, i) =>
-      `<div class="cat-summary-item">
-        <span class="cat-summary-label" style="color:${BAR_COLORS[i]}">${CAT_LABELS[i]}</span>
-        <span class="cat-summary-value" style="color:${BAR_COLORS[i]}">${fmtMin(totals[cat])}</span>
-      </div>`
-    ).join('');
   }
 
   function drawPainChart(points) {
@@ -1511,9 +1487,6 @@
   function renderActivityAverage(points) {
     const card = $('activityAvgCard');
     if (!card) return;
-    const isWeekly = graphState.periodType === 'weekly';
-    card.style.display = isWeekly ? 'none' : '';
-    if (isWeekly) return;
 
     const totals = { '앉은 시간': 0, '걸은 시간': 0, '운동한 시간': 0, '휴식한 시간': 0 };
     let daysWithData = 0;
