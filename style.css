@@ -151,7 +151,34 @@ body.phase-rest .action-btn:hover { background: #3a6335; }
 body.phase-warning .ring-progress { stroke: var(--danger); }
 body.phase-warning #phaseLabel { color: var(--danger); }
 
-/* Action Button */
+/* Action Buttons */
+.action-btn-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.action-btn-row .action-btn {
+  flex: 1;
+  max-width: 200px;
+}
+
+.action-btn-row .end-btn {
+  background: #6b7c69;
+  flex: 0 0 auto;
+  min-width: 80px;
+  padding: 16px 20px;
+}
+
+.action-btn-row .end-btn:hover {
+  background: #7d8f7b;
+}
+
+.action-btn-row .end-btn.hidden {
+  display: none;
+}
+
 .action-btn {
   background: var(--primary);
   color: white;

@@ -18,6 +18,7 @@
   const alertMessage = $('alertMessage');
   const alertBtn = $('alertBtn');
   const alertIcon = $('alertIcon');
+  const endBtn = $('endBtn');
   const activityMinEl = $('activityMin');
   const restMinEl = $('restMin');
   const sittingLimitRange = $('sittingLimitRange');
@@ -273,6 +274,7 @@
     phaseLabel.textContent = '활동';
     actionBtn.textContent = '정지';
     actionBtn.classList.remove('danger');
+    endBtn.classList.remove('hidden');
     setPhaseClass('activity');
 
     startCountdown(settings.activityMin * 60, updateTimerUI, onActivityEnd);
@@ -284,10 +286,28 @@
     phaseLabel.textContent = '휴식';
     actionBtn.textContent = '건너뛰기';
     actionBtn.classList.remove('danger');
+    endBtn.classList.remove('hidden');
     setPhaseClass('rest');
 
     stopSittingTracker();
     startCountdown(settings.restMin * 60, updateTimerUI, onRestEnd);
+  }
+
+  function endCurrentPhase() {
+    if (state.phase === 'activity') {
+      // 활동 중 종료 → 앉은시간 저장 후 휴식으로
+      clearInterval(state.intervalId);
+      state.intervalId = null;
+      state.cycles++;
+      cycleCount.textContent = `${state.cycles}회 완료`;
+      saveSittingState();
+      startRest();
+    } else if (state.phase === 'rest') {
+      // 휴식 중 종료 → 대기 상태로
+      clearInterval(state.intervalId);
+      state.intervalId = null;
+      onRestEnd();
+    }
   }
 
   function onActivityEnd() {
@@ -309,6 +329,7 @@
     timerDisplay.textContent = formatTime(0);
     actionBtn.textContent = '다시 시작';
     actionBtn.classList.remove('danger');
+    endBtn.classList.add('hidden');
     setPhaseClass('');
     updateTimerUI();
 
@@ -330,6 +351,7 @@
     phaseLabel.textContent = '준비';
     actionBtn.textContent = '시작';
     actionBtn.classList.remove('danger');
+    endBtn.classList.add('hidden');
     setPhaseClass('');
     updateTimerUI();
   }
@@ -612,6 +634,8 @@
         break;
     }
   });
+
+  endBtn.addEventListener('click', endCurrentPhase);
 
   $('settingsBtn').addEventListener('click', openSettings);
   $('settingsClose').addEventListener('click', closeSettings);
