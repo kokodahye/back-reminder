@@ -635,6 +635,38 @@
     });
   });
 
+  // 활동/휴식 시간 클릭 시 직접 입력
+  function makeEditable(el, settingKey, min, max) {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', () => {
+      if (el.querySelector('input')) return;
+      const current = settings[settingKey];
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.value = current;
+      input.min = min;
+      input.max = max;
+      input.style.cssText = 'width:48px;font-size:20px;font-weight:700;text-align:center;border:1.5px solid var(--primary);border-radius:8px;background:var(--bg);color:var(--text);padding:2px 4px;outline:none;';
+      el.textContent = '';
+      el.appendChild(input);
+      input.focus();
+      input.select();
+      const commit = () => {
+        const val = Math.max(min, Math.min(max, parseInt(input.value) || current));
+        settings[settingKey] = val;
+        el.textContent = val;
+        saveSettings();
+        if (state.phase === 'idle') updateTimerUI();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') input.blur();
+      });
+    });
+  }
+  makeEditable(activityMinEl, 'activityMin', 5, 120);
+  makeEditable(restMinEl, 'restMin', 1, 30);
+
   sittingLimitRange.addEventListener('input', () => {
     settings.sittingLimitHours = parseFloat(sittingLimitRange.value);
     sittingLimitLabel.textContent = settings.sittingLimitHours + '시간';
