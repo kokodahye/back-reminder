@@ -1406,6 +1406,34 @@ input[type="time"] {
   color: var(--text-sub);
 }
 
+/* Vitamin status in recent records */
+.record-vitamins {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.record-vit {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #ebeae3;
+  color: #b0b0a8;
+  text-decoration: line-through;
+}
+
+.record-vit.taken {
+  background: #eaf2e4;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.record-vit.taken::before {
+  content: '✓ ';
+}
+
 .record-empty {
   text-align: center;
   padding: 20px 0;

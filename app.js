@@ -1547,6 +1547,17 @@
       }
       if (r.period) meta.push('생리 중');
       if (r.note) meta.push(`📝 ${escapeHtml(r.note.slice(0, 30))}${r.note.length > 30 ? '…' : ''}`);
+      const vit = r.vitamins || {};
+      const vitNames = [
+        { key: 'folicAcid', label: '엽산' },
+        { key: 'vitaminD', label: 'D' },
+        { key: 'omega3', label: '오메가3' },
+        { key: 'probiotics', label: '유산균' }
+      ];
+      const hasVit = vitNames.some((v) => vit[v.key]);
+      const vitHtml = hasVit ? `<div class="record-vitamins">${vitNames.map((v) =>
+        `<span class="record-vit ${vit[v.key] ? 'taken' : ''}">${v.label}</span>`
+      ).join('')}</div>` : '';
       const m = p.date.getMonth() + 1;
       const d = p.date.getDate();
       return `
@@ -1556,6 +1567,7 @@
             <span class="record-pain ${scoreClass}">${score === '-' ? '-' : score + '점'}</span>
           </div>
           ${meta.length > 0 ? `<div class="record-meta">${meta.join(' · ')}</div>` : ''}
+          ${vitHtml}
         </div>
       `;
     }).join('');
