@@ -181,6 +181,49 @@ body.phase-warning #phaseLabel { color: var(--danger); }
   background: var(--danger-light);
 }
 
+/* Timer Settings (활동/휴식 시간) */
+.timer-settings {
+  width: 100%;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 14px 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timer-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.timer-setting-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-sub);
+  min-width: 40px;
+}
+
+.timer-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer-stepper .stepper-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+}
+
+.timer-setting-unit {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin-left: -4px;
+}
+
 /* Sitting Info */
 #sittingInfo {
   width: 100%;

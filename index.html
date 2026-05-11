@@ -50,6 +50,28 @@
       <!-- Action Button -->
       <button id="actionBtn" class="action-btn">시작</button>
 
+      <!-- Timer Settings (활동/휴식 시간) -->
+      <div class="timer-settings">
+        <div class="timer-setting-row">
+          <span class="timer-setting-label">활동</span>
+          <div class="timer-stepper">
+            <button class="stepper-btn" data-target="activityMin" data-delta="-5">-5</button>
+            <span id="activityMin">40</span>
+            <span class="timer-setting-unit">분</span>
+            <button class="stepper-btn" data-target="activityMin" data-delta="5">+5</button>
+          </div>
+        </div>
+        <div class="timer-setting-row">
+          <span class="timer-setting-label">휴식</span>
+          <div class="timer-stepper">
+            <button class="stepper-btn" data-target="restMin" data-delta="-1">-1</button>
+            <span id="restMin">5</span>
+            <span class="timer-setting-unit">분</span>
+            <button class="stepper-btn" data-target="restMin" data-delta="1">+1</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Sitting Time -->
       <div id="sittingInfo">
         <div class="sitting-row">
@@ -318,37 +340,9 @@
         </div>
 
         <div class="setting-group">
-          <label>활동 시간 (분)</label>
-          <div class="stepper">
-            <button class="stepper-btn" data-target="activityMin" data-delta="-5">-5</button>
-            <span id="activityMin">40</span>
-            <button class="stepper-btn" data-target="activityMin" data-delta="5">+5</button>
-          </div>
-        </div>
-
-        <div class="setting-group">
-          <label>휴식 시간 (분)</label>
-          <div class="stepper">
-            <button class="stepper-btn" data-target="restMin" data-delta="-1">-1</button>
-            <span id="restMin">5</span>
-            <button class="stepper-btn" data-target="restMin" data-delta="1">+1</button>
-          </div>
-        </div>
-
-        <div class="setting-group">
           <label>앉은 시간 제한 (시간)</label>
           <input type="range" id="sittingLimitRange" min="5" max="8" step="0.5" value="5">
           <span id="sittingLimitLabel">5시간</span>
-        </div>
-
-        <div class="setting-group">
-          <label>일과 시작</label>
-          <input type="time" id="scheduleStart" value="09:00">
-        </div>
-
-        <div class="setting-group">
-          <label>일과 종료</label>
-          <input type="time" id="scheduleEnd" value="00:00">
         </div>
 
         <div class="setting-group">

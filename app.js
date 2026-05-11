@@ -22,8 +22,6 @@
   const restMinEl = $('restMin');
   const sittingLimitRange = $('sittingLimitRange');
   const sittingLimitLabel = $('sittingLimitLabel');
-  const scheduleStart = $('scheduleStart');
-  const scheduleEnd = $('scheduleEnd');
   const notifPermBtn = $('notifPermBtn');
   const notifStatus = $('notifStatus');
 
@@ -565,8 +563,6 @@
     restMinEl.textContent = settings.restMin;
     sittingLimitRange.value = settings.sittingLimitHours;
     sittingLimitLabel.textContent = settings.sittingLimitHours + '시간';
-    scheduleStart.value = settings.scheduleStart;
-    scheduleEnd.value = settings.scheduleEnd;
     updateNotifStatus();
     settingsOverlay.classList.remove('hidden');
   }
@@ -642,16 +638,6 @@
   sittingLimitRange.addEventListener('input', () => {
     settings.sittingLimitHours = parseFloat(sittingLimitRange.value);
     sittingLimitLabel.textContent = settings.sittingLimitHours + '시간';
-    saveSettings();
-  });
-
-  scheduleStart.addEventListener('change', () => {
-    settings.scheduleStart = scheduleStart.value;
-    saveSettings();
-  });
-
-  scheduleEnd.addEventListener('change', () => {
-    settings.scheduleEnd = scheduleEnd.value;
     saveSettings();
   });
 
