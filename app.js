@@ -1743,12 +1743,10 @@
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
-    // Firebase 동기화 복원
+    // Firebase 동기화 자동 연결 (기본 코드: DAHYE)
     initFirebase();
     const savedCode = localStorage.getItem('backTimerSyncCode');
-    if (savedCode) {
-      connectSync(savedCode);
-    }
+    connectSync(savedCode || 'DAHYE');
     updateSyncUI();
 
     // 허리 기록 기능 초기화
