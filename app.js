@@ -1569,7 +1569,7 @@
       return `
         <div class="record-item">
           <div class="record-head">
-            <span class="record-date">${m}/${d} (${wd[p.date.getDay()]})</span>
+            <span class="record-date">${m}/${d} (${wd[p.date.getDay()]})${r.period ? '🩸' : ''}</span>
             <span class="record-pain ${scoreClass}">${score === '-' ? '-' : score + '점'}</span>
           </div>
           ${meta.length > 0 ? `<div class="record-meta">${meta.join(' · ')}</div>` : ''}
