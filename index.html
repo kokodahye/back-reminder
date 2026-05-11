@@ -150,6 +150,36 @@
           <textarea id="checkNote" class="check-note" placeholder="오늘의 컨디션을 자유롭게 적어보세요" rows="3"></textarea>
         </div>
 
+        <div class="check-card">
+          <div class="check-section-title">비타민 체크 💊</div>
+          <div class="vitamin-list">
+            <label class="vitamin-item">
+              <span class="vitamin-name">엽산</span>
+              <span class="vitamin-time">아침식후</span>
+              <input type="checkbox" id="vitFolicAcid" class="vitamin-check" data-key="folicAcid">
+              <span class="vitamin-slider"></span>
+            </label>
+            <label class="vitamin-item">
+              <span class="vitamin-name">비타민 D</span>
+              <span class="vitamin-time">아침식후</span>
+              <input type="checkbox" id="vitVitaminD" class="vitamin-check" data-key="vitaminD">
+              <span class="vitamin-slider"></span>
+            </label>
+            <label class="vitamin-item">
+              <span class="vitamin-name">오메가 3</span>
+              <span class="vitamin-time">저녁식후</span>
+              <input type="checkbox" id="vitOmega3" class="vitamin-check" data-key="omega3">
+              <span class="vitamin-slider"></span>
+            </label>
+            <label class="vitamin-item">
+              <span class="vitamin-name">유산균</span>
+              <span class="vitamin-time">자기전</span>
+              <input type="checkbox" id="vitProbiotics" class="vitamin-check" data-key="probiotics">
+              <span class="vitamin-slider"></span>
+            </label>
+          </div>
+        </div>
+
         <button id="saveCheckBtn" class="action-btn save-check-btn">저장</button>
         <div id="saveCheckMsg" class="save-msg"></div>
       </section>

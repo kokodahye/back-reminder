@@ -1097,6 +1097,11 @@
     updatePainDisplay(rec.painScore);
     $('periodCheck').checked = !!rec.period;
     $('checkNote').value = rec.note || '';
+    // 비타민 체크 로드
+    const vit = rec.vitamins || {};
+    document.querySelectorAll('.vitamin-check').forEach((cb) => {
+      cb.checked = !!vit[cb.dataset.key];
+    });
     renderActivityList(rec.activities || []);
 
     const parts = healthSelectedDate.split('-');
@@ -1201,10 +1206,15 @@
 
   // ---- Save Today ----
   function saveTodayCheck() {
+    const vitamins = {};
+    document.querySelectorAll('.vitamin-check').forEach((cb) => {
+      vitamins[cb.dataset.key] = cb.checked;
+    });
     const rec = {
       painScore: parseInt($('painScoreRange').value),
       activities: getSelectedRecord().activities || [],
       period: $('periodCheck').checked,
+      vitamins: vitamins,
       note: $('checkNote').value.trim(),
       savedAt: Date.now()
     };
@@ -1661,6 +1671,16 @@
       const today = getSelectedRecord();
       today.period = $('periodCheck').checked;
       saveSelectedRecord(today);
+    });
+
+    // 비타민 체크
+    document.querySelectorAll('.vitamin-check').forEach((cb) => {
+      cb.addEventListener('change', () => {
+        const today = getSelectedRecord();
+        if (!today.vitamins) today.vitamins = {};
+        today.vitamins[cb.dataset.key] = cb.checked;
+        saveSelectedRecord(today);
+      });
     });
 
     // 메모
