@@ -1091,19 +1091,24 @@
   function switchView(view) {
     const timerView = $('timerView');
     const healthView = $('healthView');
+    const analysisView = $('analysisView');
     document.querySelectorAll('.tab-btn').forEach((b) => {
       b.classList.toggle('active', b.dataset.view === view);
     });
+    timerView.classList.add('hidden');
+    healthView.classList.add('hidden');
+    analysisView.classList.add('hidden');
     if (view === 'timer') {
       timerView.classList.remove('hidden');
-      healthView.classList.add('hidden');
       $('headerTitle').textContent = '허리 알리미';
-    } else {
-      timerView.classList.add('hidden');
+    } else if (view === 'health') {
       healthView.classList.remove('hidden');
       $('headerTitle').textContent = '허리 기록';
-      // 진입 시 오늘 데이터 로드
       loadTodayCheckUI();
+    } else if (view === 'analysis') {
+      analysisView.classList.remove('hidden');
+      $('headerTitle').textContent = '분석';
+      renderAnalysis();
     }
   }
 
@@ -1714,6 +1719,250 @@
         </div>
       `;
     }).join('');
+  }
+
+  // ---- Analysis (분석) ----
+  function renderAnalysis() {
+    const records = loadHealthRecords();
+    const keys = Object.keys(records).sort();
+    const dayCount = keys.filter((k) => records[k] && typeof records[k].painScore === 'number').length;
+
+    $('analysisDayCount').textContent = dayCount;
+
+    if (dayCount < 3) {
+      $('analysisMinData').style.display = '';
+      $('analysisContent').style.display = 'none';
+      return;
+    }
+
+    $('analysisMinData').style.display = 'none';
+    $('analysisContent').style.display = '';
+
+    // 연속된 날짜 쌍 만들기 (전날 활동 → 다음날 통증)
+    const pairs = [];
+    for (let i = 0; i < keys.length - 1; i++) {
+      const today = records[keys[i]];
+      const tomorrow = records[keys[i + 1]];
+      if (!today || !tomorrow) continue;
+      if (typeof tomorrow.painScore !== 'number') continue;
+      // 연속된 날짜인지 확인
+      const d1 = new Date(keys[i]);
+      const d2 = new Date(keys[i + 1]);
+      const diff = (d2 - d1) / (1000 * 60 * 60 * 24);
+      if (diff !== 1) continue;
+      pairs.push({ prevDay: keys[i], nextDay: keys[i + 1], prev: today, next: tomorrow });
+    }
+
+    // 전체 평균 통증
+    const allScores = keys.map((k) => records[k]).filter((r) => r && typeof r.painScore === 'number').map((r) => r.painScore);
+    const overallAvg = allScores.reduce((s, v) => s + v, 0) / allScores.length;
+
+    // 카테고리별 전날 활동 분석
+    const insights = [];
+
+    if (pairs.length >= 2) {
+      // 1) 앉은 시간 많은 날 vs 적은 날 → 다음날 통증
+      analyzeActivity(pairs, insights, overallAvg, '앉은 시간', (rec) => {
+        const cats = categorizeRecord(rec);
+        return cats['앉은 시간'];
+      }, '앉은 시간이 많은', '🪑');
+
+      // 2) 걸은 시간
+      analyzeActivity(pairs, insights, overallAvg, '걸은 시간', (rec) => {
+        const cats = categorizeRecord(rec);
+        return cats['걸은 시간'];
+      }, '많이 걸은', '🚶');
+
+      // 3) 운동한 시간
+      analyzeActivity(pairs, insights, overallAvg, '운동한 시간', (rec) => {
+        const cats = categorizeRecord(rec);
+        return cats['운동한 시간'];
+      }, '운동한', '💪');
+
+      // 4) 걸음수
+      analyzeActivity(pairs, insights, overallAvg, '걸음수', (rec) => {
+        return getStepsForRecord(rec);
+      }, '걸음수가 많은', '👟');
+
+      // 5) 생리
+      const periodPairs = pairs.filter((p) => p.prev.period || p.next.period);
+      const noPeriodPairs = pairs.filter((p) => !p.prev.period && !p.next.period);
+      if (periodPairs.length >= 1 && noPeriodPairs.length >= 1) {
+        const periodAvg = periodPairs.reduce((s, p) => s + p.next.painScore, 0) / periodPairs.length;
+        const noPeriodAvg = noPeriodPairs.reduce((s, p) => s + p.next.painScore, 0) / noPeriodPairs.length;
+        const diff = periodAvg - noPeriodAvg;
+        if (Math.abs(diff) >= 0.3) {
+          insights.push({
+            icon: '🩸',
+            text: diff < 0
+              ? `생리 중일 때 허리 점수가 평균 ${Math.abs(diff).toFixed(1)}점 낮았어요`
+              : `생리 중일 때 허리 점수가 평균 ${diff.toFixed(1)}점 높았어요`,
+            type: diff < 0 ? 'negative' : 'positive',
+            detail: `생리 시 ${periodAvg.toFixed(1)}점 vs 평소 ${noPeriodAvg.toFixed(1)}점`
+          });
+        }
+      }
+    }
+
+    // 인사이트 렌더링
+    const cardsEl = $('insightCards');
+    if (insights.length === 0) {
+      cardsEl.innerHTML = `<div class="insight-card neutral">
+        <div class="insight-icon">📊</div>
+        <div class="insight-body">
+          <div class="insight-text">아직 뚜렷한 패턴이 발견되지 않았어요</div>
+          <div class="insight-detail">데이터가 더 쌓이면 정확한 분석이 가능해요 (현재 ${dayCount}일)</div>
+        </div>
+      </div>`;
+    } else {
+      cardsEl.innerHTML = insights.map((ins) => `
+        <div class="insight-card ${ins.type}">
+          <div class="insight-icon">${ins.icon}</div>
+          <div class="insight-body">
+            <div class="insight-text">${ins.text}</div>
+            <div class="insight-detail">${ins.detail}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 좋은 날 vs 나쁜 날
+    renderGoodBad(records, keys);
+
+    // 요인별 영향도
+    renderCorrelations(pairs, overallAvg);
+  }
+
+  function analyzeActivity(pairs, insights, overallAvg, name, extractFn, label, icon) {
+    const withData = pairs.filter((p) => extractFn(p.prev) > 0);
+    if (withData.length < 2) return;
+
+    const values = withData.map((p) => extractFn(p.prev));
+    const median = values.sort((a, b) => a - b)[Math.floor(values.length / 2)];
+
+    const highPairs = withData.filter((p) => extractFn(p.prev) >= median);
+    const lowPairs = withData.filter((p) => extractFn(p.prev) < median);
+    if (highPairs.length === 0 || lowPairs.length === 0) return;
+
+    const highAvg = highPairs.reduce((s, p) => s + p.next.painScore, 0) / highPairs.length;
+    const lowAvg = lowPairs.reduce((s, p) => s + p.next.painScore, 0) / lowPairs.length;
+    const diff = highAvg - lowAvg;
+
+    if (Math.abs(diff) < 0.3) return;
+
+    const unit = name === '걸음수' ? '보' : '분';
+    insights.push({
+      icon: icon,
+      text: diff > 0
+        ? `${label} 다음 날 허리 점수가 ${diff.toFixed(1)}점 더 좋았어요`
+        : `${label} 다음 날 허리 점수가 ${Math.abs(diff).toFixed(1)}점 더 나빴어요`,
+      type: diff > 0 ? 'positive' : 'negative',
+      detail: `${label} 날: ${highAvg.toFixed(1)}점 vs 적은 날: ${lowAvg.toFixed(1)}점`
+    });
+  }
+
+  function renderGoodBad(records, keys) {
+    const scored = keys.map((k) => ({ key: k, rec: records[k] }))
+      .filter((d) => d.rec && typeof d.rec.painScore === 'number')
+      .sort((a, b) => b.rec.painScore - a.rec.painScore);
+
+    const n = scored.length;
+    const topN = Math.max(1, Math.round(n * 0.3));
+    const good = scored.slice(0, topN);
+    const bad = scored.slice(-topN);
+
+    const avgCats = (days) => {
+      const totals = { sit: 0, walk: 0, exercise: 0, rest: 0, steps: 0, count: days.length };
+      days.forEach((d) => {
+        const c = categorizeRecord(d.rec);
+        totals.sit += c['앉은 시간'];
+        totals.walk += c['걸은 시간'];
+        totals.exercise += c['운동한 시간'];
+        totals.rest += c['휴식한 시간'];
+        totals.steps += getStepsForRecord(d.rec);
+      });
+      const cnt = totals.count || 1;
+      return {
+        pain: (days.reduce((s, d) => s + d.rec.painScore, 0) / cnt).toFixed(1),
+        sit: Math.round(totals.sit / cnt),
+        walk: Math.round(totals.walk / cnt),
+        exercise: Math.round(totals.exercise / cnt),
+        steps: Math.round(totals.steps / cnt)
+      };
+    };
+
+    const g = avgCats(good);
+    const b = avgCats(bad);
+
+    const fmtMin = (m) => m >= 60 ? `${(m / 60).toFixed(1)}h` : `${m}분`;
+
+    $('goodBadContent').innerHTML = `
+      <div class="good-bad-col good">
+        <div class="good-bad-label">😊 좋은 날 (평균 ${g.pain}점)</div>
+        <div class="good-bad-stat"><span>🪑 앉은 시간</span><span class="good-bad-stat-val">${fmtMin(g.sit)}</span></div>
+        <div class="good-bad-stat"><span>🚶 걸은 시간</span><span class="good-bad-stat-val">${fmtMin(g.walk)}</span></div>
+        <div class="good-bad-stat"><span>💪 운동</span><span class="good-bad-stat-val">${fmtMin(g.exercise)}</span></div>
+        <div class="good-bad-stat"><span>👟 걸음수</span><span class="good-bad-stat-val">${g.steps.toLocaleString()}</span></div>
+      </div>
+      <div class="good-bad-col bad">
+        <div class="good-bad-label">😣 나쁜 날 (평균 ${b.pain}점)</div>
+        <div class="good-bad-stat"><span>🪑 앉은 시간</span><span class="good-bad-stat-val">${fmtMin(b.sit)}</span></div>
+        <div class="good-bad-stat"><span>🚶 걸은 시간</span><span class="good-bad-stat-val">${fmtMin(b.walk)}</span></div>
+        <div class="good-bad-stat"><span>💪 운동</span><span class="good-bad-stat-val">${fmtMin(b.exercise)}</span></div>
+        <div class="good-bad-stat"><span>👟 걸음수</span><span class="good-bad-stat-val">${b.steps.toLocaleString()}</span></div>
+      </div>
+    `;
+  }
+
+  function renderCorrelations(pairs, overallAvg) {
+    if (pairs.length < 2) {
+      $('correlationContent').innerHTML = '<div style="text-align:center;color:var(--text-sub);font-size:13px;padding:12px 0;">연속 기록이 부족합니다</div>';
+      return;
+    }
+
+    const factors = [
+      { name: '앉은 시간 ↑', icon: '🪑', fn: (rec) => categorizeRecord(rec)['앉은 시간'] },
+      { name: '걸은 시간 ↑', icon: '🚶', fn: (rec) => categorizeRecord(rec)['걸은 시간'] },
+      { name: '운동 시간 ↑', icon: '💪', fn: (rec) => categorizeRecord(rec)['운동한 시간'] },
+      { name: '걸음수 ↑', icon: '👟', fn: (rec) => getStepsForRecord(rec) }
+    ];
+
+    const items = [];
+    factors.forEach((f) => {
+      const withData = pairs.filter((p) => f.fn(p.prev) > 0);
+      const without = pairs.filter((p) => f.fn(p.prev) === 0);
+      if (withData.length < 1 || without.length < 1) return;
+
+      const withAvg = withData.reduce((s, p) => s + p.next.painScore, 0) / withData.length;
+      const withoutAvg = without.reduce((s, p) => s + p.next.painScore, 0) / without.length;
+      const diff = withAvg - withoutAvg;
+
+      let arrow, arrowClass, effectClass;
+      if (diff > 0.2) { arrow = '↑'; arrowClass = 'up'; effectClass = 'positive'; }
+      else if (diff < -0.2) { arrow = '↓'; arrowClass = 'down'; effectClass = 'negative'; }
+      else { arrow = '→'; arrowClass = 'flat'; effectClass = 'neutral'; }
+
+      items.push({
+        name: f.name,
+        icon: f.icon,
+        arrow, arrowClass, effectClass,
+        effect: diff > 0 ? `+${diff.toFixed(1)}점` : `${diff.toFixed(1)}점`
+      });
+    });
+
+    if (items.length === 0) {
+      $('correlationContent').innerHTML = '<div style="text-align:center;color:var(--text-sub);font-size:13px;padding:12px 0;">분석할 데이터가 부족합니다</div>';
+      return;
+    }
+
+    $('correlationContent').innerHTML = items.map((it) => `
+      <div class="correlation-item">
+        <span style="font-size:18px;">${it.icon}</span>
+        <span class="correlation-label">${it.name}</span>
+        <span class="correlation-arrow ${it.arrowClass}">허리 ${it.arrow}</span>
+        <span class="correlation-effect ${it.effectClass}">${it.effect}</span>
+      </div>
+    `).join('');
   }
 
   // ---- Calendar (Date Picker) ----

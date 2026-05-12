@@ -283,6 +283,39 @@
       </section>
     </main>
 
+    <!-- Analysis View -->
+    <main id="analysisView" class="view hidden">
+      <div class="analysis-header">
+        <h2 class="analysis-title">허리 인사이트</h2>
+        <p class="analysis-desc">전날 활동이 다음날 허리에 미치는 영향</p>
+      </div>
+
+      <div id="analysisMinData" class="analysis-min-data">
+        <div class="analysis-empty-icon">📊</div>
+        <p>데이터가 충분하지 않아요</p>
+        <p class="analysis-empty-sub">7일 이상 기록하면 분석이 시작됩니다.<br>현재 <strong id="analysisDayCount">0</strong>일 기록됨</p>
+      </div>
+
+      <div id="analysisContent" style="display:none;">
+        <!-- 핵심 인사이트 카드들 -->
+        <div id="insightCards" class="insight-cards"></div>
+
+        <!-- 좋은 날 vs 나쁜 날 비교 -->
+        <div class="analysis-card" id="goodBadCard">
+          <div class="analysis-card-title">좋은 날 vs 나쁜 날</div>
+          <div class="analysis-card-desc">허리 점수 상위 30% vs 하위 30% 비교</div>
+          <div id="goodBadContent" class="good-bad-grid"></div>
+        </div>
+
+        <!-- 요인별 영향도 -->
+        <div class="analysis-card" id="correlationCard">
+          <div class="analysis-card-title">요인별 영향도</div>
+          <div class="analysis-card-desc">각 활동이 다음날 허리에 미치는 영향</div>
+          <div id="correlationContent" class="correlation-list"></div>
+        </div>
+      </div>
+    </main>
+
     <!-- Activity Add Modal -->
     <div id="activityModal" class="overlay hidden">
       <div class="settings-panel">
@@ -379,6 +412,12 @@
           <path d="M3 12h4l2-6 4 12 2-6h6"/>
         </svg>
         <span>허리 기록</span>
+      </button>
+      <button class="tab-btn" data-view="analysis">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.6 3 12"/><polyline points="21 12 16.5 14.6 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        <span>분석</span>
       </button>
     </nav>
 
