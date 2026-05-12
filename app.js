@@ -1031,8 +1031,11 @@
   let activityModalState = {
     selectedType: null,
     customName: '',
-    minutes: 30
+    minutes: 30,
+    inputMode: 'minutes' // 'minutes' or 'steps'
   };
+
+  const STEPS_PER_MINUTE = 100; // 158cm 여성 기준 분당 약 100보
 
   // 그래프 상태
   let graphState = {
@@ -1153,7 +1156,7 @@
     list.innerHTML = activities.map((a, i) => `
       <div class="activity-item">
         <span class="activity-item-type">${escapeHtml(a.type)}</span>
-        <span class="activity-item-min">${a.minutes}분</span>
+        <span class="activity-item-min">${a.steps ? a.steps.toLocaleString() + '보 (' + a.minutes + '분)' : a.minutes + '분'}</span>
         <button class="activity-item-del" data-index="${i}" aria-label="삭제">✕</button>
       </div>
     `).join('');
@@ -1183,10 +1186,17 @@
 
   // ---- Activity Modal ----
   function openActivityModal() {
-    activityModalState = { selectedType: null, customName: '' };
+    activityModalState = { selectedType: null, customName: '', inputMode: 'minutes' };
     $('actMinInput').value = '30';
+    $('actStepsInput').value = '1000';
+    $('stepsHint').textContent = '≈ 10분';
     $('customTypeGroup').style.display = 'none';
     $('customTypeInput').value = '';
+    $('stepsGroup').style.display = 'none';
+    $('minutesGroup').style.display = '';
+    $('stepsInputGroup').style.display = 'none';
+    $('modeMinBtn').classList.add('active');
+    $('modeStepBtn').classList.remove('active');
     document.querySelectorAll('.activity-type-btn').forEach((b) => b.classList.remove('selected'));
     $('activityModal').classList.remove('hidden');
   }
@@ -1210,12 +1220,23 @@
       }
       finalType = custom;
     }
-    const minutes = parseInt($('actMinInput').value) || 0;
-    if (minutes <= 0) return;
+
+    let minutes, steps = null;
+    if (type === '걷기' && activityModalState.inputMode === 'steps') {
+      steps = parseInt($('actStepsInput').value) || 0;
+      if (steps <= 0) return;
+      minutes = Math.round(steps / STEPS_PER_MINUTE);
+      if (minutes < 1) minutes = 1;
+    } else {
+      minutes = parseInt($('actMinInput').value) || 0;
+      if (minutes <= 0) return;
+    }
 
     const today = getSelectedRecord();
     today.activities = today.activities || [];
-    today.activities.push({ type: finalType, minutes });
+    const entry = { type: finalType, minutes };
+    if (steps) entry.steps = steps;
+    today.activities.push(entry);
     saveSelectedRecord(today);
     renderActivityList(today.activities);
     closeActivityModal();
@@ -1377,6 +1398,7 @@
     renderActivityBreakdown(allPoints);
     renderRecentRecords(allPoints);
     renderActivityAverage(allPoints);
+    renderStepsChart(allPoints);
   }
 
   function drawPainChart(points) {
@@ -1550,6 +1572,103 @@
     $('avgRest').textContent = fmtHrs(totals['휴식한 시간']);
   }
 
+  function getStepsForRecord(rec) {
+    if (!rec || !rec.activities) return 0;
+    let total = 0;
+    rec.activities.forEach((a) => {
+      if (a.type === '걷기') {
+        total += a.steps || (a.minutes * STEPS_PER_MINUTE);
+      }
+    });
+    return total;
+  }
+
+  function renderStepsChart(points) {
+    const svg = $('stepsChartSvg');
+    if (!svg) return;
+
+    const type = graphState.periodType;
+
+    // 데이터 수집
+    const buckets = points.map((p) => {
+      const recs = p.records || (p.record ? [p.record] : []);
+      let steps = 0;
+      let days = 0;
+      recs.forEach((r) => {
+        if (!r) return;
+        const s = getStepsForRecord(r);
+        if (s > 0) { steps += s; days++; }
+      });
+      // 연간: 월별 일 평균
+      const value = type === 'yearly' && days > 0 ? Math.round(steps / days) : steps;
+      return { label: p.label, value, totalSteps: steps, days };
+    });
+
+    const hasData = buckets.some((b) => b.value > 0);
+
+    // 서브 타이틀
+    $('stepsChartSub').textContent = type === 'yearly' ? '(일 평균)' : '(보)';
+
+    // 평균
+    const withData = buckets.filter((b) => b.value > 0);
+    if (withData.length > 0) {
+      const avg = Math.round(withData.reduce((s, b) => s + b.value, 0) / withData.length);
+      $('stepsAvg').innerHTML = `평균 <strong>${avg.toLocaleString()}</strong> 보`;
+    } else {
+      $('stepsAvg').innerHTML = '';
+    }
+
+    if (!hasData) {
+      svg.innerHTML = `<text x="180" y="100" text-anchor="middle" fill="var(--text-sub)" font-size="13">걷기 기록이 없습니다</text>`;
+      return;
+    }
+
+    const W = 360, H = 200;
+    const PAD_L = 8, PAD_R = 8, PAD_T = 12, PAD_B = 28;
+    const innerW = W - PAD_L - PAD_R;
+    const innerH = H - PAD_T - PAD_B;
+
+    const maxVal = Math.max(...buckets.map((b) => b.value), 1);
+    const yMax = Math.ceil(maxVal / 1000) * 1000 || 1000;
+    const yAt = (v) => PAD_T + innerH - (v / yMax) * innerH;
+
+    const n = buckets.length;
+    const barW = Math.max(10, Math.min(32, (innerW / n) * 0.6));
+    const gap = (innerW - barW * n) / (n + 1);
+
+    let svgContent = '';
+
+    // y축 그리드
+    const ySteps = yMax <= 3000 ? 1000 : yMax <= 10000 ? 2000 : 5000;
+    for (let t = 0; t <= yMax; t += ySteps) {
+      const y = yAt(t);
+      svgContent += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="#ebeae3" stroke-width="1"/>`;
+    }
+
+    // 바
+    buckets.forEach((b, i) => {
+      const bx = PAD_L + gap + i * (barW + gap);
+      if (b.value > 0) {
+        const barH = (b.value / yMax) * innerH;
+        const by = yAt(0) - barH;
+        svgContent += `<rect x="${bx}" y="${by}" width="${barW}" height="${barH}" fill="#5B9BD5" rx="3" ry="3"/>`;
+        // 값 라벨 (큰 값만)
+        if (n <= 12 || b.value === maxVal) {
+          const valLabel = b.value >= 1000 ? Math.round(b.value / 1000) + 'k' : b.value;
+          svgContent += `<text x="${bx + barW / 2}" y="${by - 5}" text-anchor="middle" fill="var(--text)" font-size="10" font-weight="700">${valLabel}</text>`;
+        }
+      }
+
+      // x축 라벨
+      const labelStep = n > 15 ? Math.ceil(n / 10) : 1;
+      if (i % labelStep === 0 || i === n - 1) {
+        svgContent += `<text x="${bx + barW / 2}" y="${H - 8}" text-anchor="middle" fill="var(--text-sub)" font-size="10" font-weight="500">${b.label}</text>`;
+      }
+    });
+
+    svg.innerHTML = svgContent;
+  }
+
   function renderRecentRecords(points) {
     const list = $('recentRecords');
     const valid = points.filter((p) => p.record).reverse(); // 최신부터
@@ -1697,7 +1816,40 @@
         btn.classList.add('selected');
         activityModalState.selectedType = btn.dataset.type;
         $('customTypeGroup').style.display = btn.dataset.type === '기타' ? '' : 'none';
+        // 걷기 선택 시 걸음수 입력 모드 표시
+        const isWalk = btn.dataset.type === '걷기';
+        $('stepsGroup').style.display = isWalk ? '' : 'none';
+        if (!isWalk) {
+          activityModalState.inputMode = 'minutes';
+          $('minutesGroup').style.display = '';
+          $('stepsInputGroup').style.display = 'none';
+          $('modeMinBtn').classList.add('active');
+          $('modeStepBtn').classList.remove('active');
+        }
       });
+    });
+
+    // 분/걸음수 모드 토글
+    $('modeMinBtn').addEventListener('click', () => {
+      activityModalState.inputMode = 'minutes';
+      $('modeMinBtn').classList.add('active');
+      $('modeStepBtn').classList.remove('active');
+      $('minutesGroup').style.display = '';
+      $('stepsInputGroup').style.display = 'none';
+    });
+    $('modeStepBtn').addEventListener('click', () => {
+      activityModalState.inputMode = 'steps';
+      $('modeStepBtn').classList.add('active');
+      $('modeMinBtn').classList.remove('active');
+      $('minutesGroup').style.display = 'none';
+      $('stepsInputGroup').style.display = '';
+    });
+
+    // 걸음수 입력 시 분 환산 힌트
+    $('actStepsInput').addEventListener('input', () => {
+      const steps = parseInt($('actStepsInput').value) || 0;
+      const mins = Math.round(steps / STEPS_PER_MINUTE);
+      $('stepsHint').textContent = `≈ ${mins}분`;
     });
 
     $('activitySaveBtn').addEventListener('click', commitActivity);

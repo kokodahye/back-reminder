@@ -264,6 +264,17 @@
           </div>
         </div>
 
+        <!-- Steps chart -->
+        <div class="chart-card" id="stepsChartCard">
+          <div class="chart-header">
+            <span class="chart-title">걸음수 <span class="chart-title-sub" id="stepsChartSub">(보)</span></span>
+            <span class="chart-avg" id="stepsAvg"></span>
+          </div>
+          <div class="chart-container stacked-chart-container">
+            <svg id="stepsChartSvg" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </div>
+
         <!-- Recent records -->
         <div class="chart-card">
           <div class="chart-title">최근 기록</div>
@@ -301,9 +312,21 @@
           <label>활동 이름 직접 입력</label>
           <input type="text" id="customTypeInput" placeholder="예: 필라테스" class="custom-input">
         </div>
-        <div class="setting-group">
+        <div class="setting-group" id="stepsGroup" style="display:none;">
+          <label>입력 방식</label>
+          <div class="input-mode-toggle">
+            <button class="input-mode-btn active" data-mode="minutes" id="modeMinBtn">분</button>
+            <button class="input-mode-btn" data-mode="steps" id="modeStepBtn">걸음수</button>
+          </div>
+        </div>
+        <div class="setting-group" id="minutesGroup">
           <label>시간 (분)</label>
           <input type="number" id="actMinInput" class="custom-input" value="30" min="1" max="1440" placeholder="분 입력">
+        </div>
+        <div class="setting-group" id="stepsInputGroup" style="display:none;">
+          <label>걸음수</label>
+          <input type="number" id="actStepsInput" class="custom-input" value="1000" min="1" max="100000" placeholder="걸음수 입력">
+          <span class="steps-convert-hint" id="stepsHint">≈ 10분</span>
         </div>
         <button id="activitySaveBtn" class="action-btn">추가</button>
       </div>
