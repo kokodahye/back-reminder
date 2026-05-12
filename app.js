@@ -1101,10 +1101,18 @@
     if (view === 'timer') {
       timerView.classList.remove('hidden');
       $('headerTitle').textContent = '허리 알리미';
-    } else if (view === 'health') {
+    } else if (view === 'check') {
       healthView.classList.remove('hidden');
-      $('headerTitle').textContent = '허리 기록';
+      $('checkSection').classList.remove('hidden');
+      $('graphSection').classList.add('hidden');
+      $('headerTitle').textContent = '오늘 체크';
       loadTodayCheckUI();
+    } else if (view === 'graph') {
+      healthView.classList.remove('hidden');
+      $('checkSection').classList.add('hidden');
+      $('graphSection').classList.remove('hidden');
+      $('headerTitle').textContent = '그래프';
+      renderGraph();
     } else if (view === 'analysis') {
       analysisView.classList.remove('hidden');
       $('headerTitle').textContent = '분석';
@@ -1112,14 +1120,6 @@
     }
   }
 
-  function switchSubtab(subtab) {
-    document.querySelectorAll('.health-subtab').forEach((b) => {
-      b.classList.toggle('active', b.dataset.subtab === subtab);
-    });
-    $('checkSection').classList.toggle('hidden', subtab !== 'check');
-    $('graphSection').classList.toggle('hidden', subtab !== 'graph');
-    if (subtab === 'graph') renderGraph();
-  }
 
   // ---- Today Check UI ----
   function loadTodayCheckUI() {
@@ -2033,11 +2033,6 @@
     // 하단 탭
     document.querySelectorAll('.tab-btn').forEach((btn) => {
       btn.addEventListener('click', () => switchView(btn.dataset.view));
-    });
-
-    // 서브탭
-    document.querySelectorAll('.health-subtab').forEach((btn) => {
-      btn.addEventListener('click', () => switchSubtab(btn.dataset.subtab));
     });
 
     // 통증 슬라이더
