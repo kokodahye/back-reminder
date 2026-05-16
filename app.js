@@ -1006,20 +1006,19 @@
   // ========================================
 
   const HEALTH_STORAGE_KEY = 'backHealthRecords';
-  const ACTIVITY_TYPES = ['앉은 시간', '걷기', '스트레칭', '맨손체조', 'MST체조', '근력운동', '유산소', '휴식', '기타'];
+  const ACTIVITY_TYPES = ['앉은 시간', '걷기', '스트레칭', '맨손체조', 'MST체조', '근력운동', '유산소', '기타'];
 
-  const BAR_CATEGORIES = ['앉은 시간', '걸은 시간', '운동한 시간', '휴식한 시간'];
-  const BAR_COLORS = ['#D4A843', '#5B9BD5', '#E8913A', '#D46A6A'];
+  const BAR_CATEGORIES = ['앉은 시간', '걸은 시간', '운동한 시간'];
+  const BAR_COLORS = ['#D4A843', '#5B9BD5', '#E8913A'];
 
   function mapActivityToCategory(type) {
     if (type === '앉은 시간') return '앉은 시간';
     if (type === '걷기') return '걸은 시간';
-    if (type === '휴식') return '휴식한 시간';
     return '운동한 시간';
   }
 
   function categorizeRecord(record) {
-    const cats = { '앉은 시간': 0, '걸은 시간': 0, '운동한 시간': 0, '휴식한 시간': 0 };
+    const cats = { '앉은 시간': 0, '걸은 시간': 0, '운동한 시간': 0 };
     if (!record || !record.activities) return cats;
     record.activities.forEach((a) => {
       cats[mapActivityToCategory(a.type)] += a.minutes || 0;
@@ -1489,7 +1488,7 @@
 
     // 날짜별 카테고리 집계
     const buckets = points.map((p) => {
-      const cats = { '앉은 시간': 0, '걸은 시간': 0, '운동한 시간': 0, '휴식한 시간': 0 };
+      const cats = { '앉은 시간': 0, '걸은 시간': 0, '운동한 시간': 0 };
       const recs = p.records || (p.record ? [p.record] : []);
       recs.forEach((r) => {
         if (!r || !r.activities) return;
@@ -1561,7 +1560,7 @@
     const card = $('activityAvgCard');
     if (!card) return;
 
-    const totals = { '앉은 시간': 0, '걸은 시간': 0, '운동한 시간': 0, '휴식한 시간': 0 };
+    const totals = { '앉은 시간': 0, '걸은 시간': 0, '운동한 시간': 0 };
     let daysWithData = 0;
     points.forEach((p) => {
       const recs = p.records || (p.record ? [p.record] : []);
@@ -1586,7 +1585,6 @@
     $('avgSit').textContent = fmtHrs(totals['앉은 시간']);
     $('avgWalk').textContent = fmtHrs(totals['걸은 시간']);
     $('avgExercise').textContent = fmtHrs(totals['운동한 시간']);
-    $('avgRest').textContent = fmtHrs(totals['휴식한 시간']);
   }
 
   function getStepsForRecord(rec) {
@@ -1884,13 +1882,12 @@
     const bad = scored.slice(-topN);
 
     const avgCats = (days) => {
-      const totals = { sit: 0, walk: 0, exercise: 0, rest: 0, steps: 0, count: days.length };
+      const totals = { sit: 0, walk: 0, exercise: 0, steps: 0, count: days.length };
       days.forEach((d) => {
         const c = categorizeRecord(d.rec);
         totals.sit += c['앉은 시간'];
         totals.walk += c['걸은 시간'];
         totals.exercise += c['운동한 시간'];
-        totals.rest += c['휴식한 시간'];
         totals.steps += getStepsForRecord(d.rec);
       });
       const cnt = totals.count || 1;
