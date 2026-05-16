@@ -1,4 +1,4 @@
-const CACHE_NAME = 'back-timer-v33';
+const CACHE_NAME = 'back-timer-v34';
 const ASSETS = [
   './',
   './index.html',

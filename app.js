@@ -1088,6 +1088,27 @@
     return 'bad';
   }
 
+  function painScoreHex(score) {
+    // 슬라이더 그라데이션과 동일: 0=#c0392b → 5=#f5d76e → 10=#99cc66
+    const stops = [
+      { at: 0, r: 0xc0, g: 0x39, b: 0x2b },
+      { at: 5, r: 0xf5, g: 0xd7, b: 0x6e },
+      { at: 10, r: 0x99, g: 0xcc, b: 0x66 }
+    ];
+    const s = Math.max(0, Math.min(10, score));
+    let lo = stops[0], hi = stops[stops.length - 1];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (s >= stops[i].at && s <= stops[i + 1].at) {
+        lo = stops[i]; hi = stops[i + 1]; break;
+      }
+    }
+    const t = lo.at === hi.at ? 0 : (s - lo.at) / (hi.at - lo.at);
+    const r = Math.round(lo.r + (hi.r - lo.r) * t);
+    const g = Math.round(lo.g + (hi.g - lo.g) * t);
+    const b = Math.round(lo.b + (hi.b - lo.b) * t);
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+  }
+
   // ---- View / Tab Switching ----
   function switchView(view) {
     const timerView = $('timerView');
@@ -1471,7 +1492,7 @@
     // 라인
     const linePath = smoothPath(validPoints);
     if (linePath) {
-      svgContent += `<path d="${linePath}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+      svgContent += `<path d="${linePath}" fill="none" stroke="#c5c9b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
     }
 
     // x축 라벨
@@ -1482,13 +1503,14 @@
       }
     });
 
-    // 데이터 점 + 값 라벨
+    // 데이터 점 + 값 라벨 (점수별 색상)
     validPoints.forEach((p) => {
+      const dotColor = painScoreHex(p.painValue);
       // 점
-      svgContent += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--primary)" stroke="#fff" stroke-width="2"/>`;
+      svgContent += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${dotColor}" stroke="#fff" stroke-width="2"/>`;
       // 값 라벨 (모든 포인트에 표시)
       const labelY = p.y - 12;
-      svgContent += `<text x="${p.x}" y="${labelY}" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="700">${p.painValue}</text>`;
+      svgContent += `<text x="${p.x}" y="${labelY}" text-anchor="middle" fill="${dotColor}" font-size="12" font-weight="700">${p.painValue}</text>`;
     });
 
     svg.innerHTML = svgContent;
