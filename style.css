@@ -1733,6 +1733,26 @@ input[type="time"] {
   padding: 0 4px 4px;
 }
 
+.chart-y-wrapper {
+  display: flex;
+  height: 200px;
+}
+
+.y-axis-svg {
+  width: 30px;
+  height: 200px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.chart-y-wrapper .stacked-chart-container {
+  flex: 1;
+  min-width: 0;
+  height: 200px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .stacked-chart-container {
   height: 200px;
   overflow-x: auto;

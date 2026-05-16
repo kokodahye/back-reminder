@@ -1420,7 +1420,8 @@
     const valid = points.filter((p) => p.painValue !== null);
     if (valid.length > 0) {
       const avg = valid.reduce((s, p) => s + p.painValue, 0) / valid.length;
-      $('chartAvg').innerHTML = `평균 <strong>${avg.toFixed(1)}</strong> 점`;
+      const avgColor = painScoreHex(Math.round(avg), true);
+      $('chartAvg').innerHTML = `평균 <strong style="color:${avgColor}">${avg.toFixed(1)}</strong> 점`;
     } else {
       $('chartAvg').innerHTML = '';
     }
@@ -1537,7 +1538,7 @@
     });
 
     const BASE_W = 360, H = 200;
-    const PAD_L = 28, PAD_R = 8, PAD_T = 8, PAD_B = 28;
+    const PAD_L = 4, PAD_R = 8, PAD_T = 8, PAD_B = 28;
     const n = buckets.length;
     const MIN_BAR_SPACE = 36;
     const W = n > 10 ? Math.max(BASE_W, PAD_L + PAD_R + n * MIN_BAR_SPACE) : BASE_W;
@@ -1563,12 +1564,22 @@
 
     let svgContent = '';
 
-    // y축 그리드 + 라벨
+    // y축 그리드 (메인 차트에는 선만)
     const ySteps = yMax <= 6 ? 1 : yMax <= 12 ? 2 : Math.ceil(yMax / 5);
     for (let t = 0; t <= yMax; t += ySteps) {
       const y = yAt(t);
       svgContent += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="#ebeae3" stroke-width="1"/>`;
-      svgContent += `<text x="${PAD_L - 6}" y="${y + 4}" text-anchor="end" fill="var(--text-sub)" font-size="10" font-weight="500">${t}</text>`;
+    }
+
+    // y축 라벨 (별도 고정 SVG)
+    const yAxisSvg = $('stackedYAxis');
+    if (yAxisSvg) {
+      let yAxisContent = '';
+      for (let t = 0; t <= yMax; t += ySteps) {
+        const y = yAt(t);
+        yAxisContent += `<text x="24" y="${y + 4}" text-anchor="end" fill="var(--text-sub)" font-size="10" font-weight="500">${t}</text>`;
+      }
+      yAxisSvg.innerHTML = yAxisContent;
     }
 
     // 스택 바 그리기
