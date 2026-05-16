@@ -1253,6 +1253,10 @@ input[type="time"] {
   padding: 4px 0;
 }
 
+.date-nav.hidden {
+  display: none;
+}
+
 .date-nav-btn {
   background: none;
   border: none;
@@ -1274,6 +1278,66 @@ input[type="time"] {
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
+}
+
+/* Custom date range picker */
+.custom-range-picker {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-range-picker.hidden {
+  display: none;
+}
+
+.custom-range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.custom-range-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-sub);
+  min-width: 32px;
+}
+
+.custom-range-input {
+  flex: 1;
+  font-size: 15px;
+  padding: 9px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--bg);
+  font-family: inherit;
+}
+
+.custom-range-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.custom-range-apply {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.custom-range-apply:hover {
+  background: var(--primary-light);
 }
 
 /* Chart card */

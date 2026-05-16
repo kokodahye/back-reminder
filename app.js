@@ -1040,7 +1040,9 @@
   // 그래프 상태
   let graphState = {
     periodType: 'weekly',
-    anchorDate: new Date()
+    anchorDate: new Date(),
+    customStart: null,
+    customEnd: null
   };
 
   let healthSelectedDate = todayKey();
@@ -1278,7 +1280,11 @@
     const type = graphState.periodType;
     let start, end;
 
-    if (type === 'weekly') {
+    if (type === 'custom') {
+      start = graphState.customStart || new Date();
+      end = graphState.customEnd || new Date();
+      return { start, end };
+    } else if (type === 'weekly') {
       const day = anchor.getDay();
       const diff = day === 0 ? 6 : day - 1; // 월요일 시작
       start = new Date(anchor);
@@ -1308,7 +1314,9 @@
     const { start, end } = getDateRange();
     const type = graphState.periodType;
     let text;
-    if (type === 'weekly') {
+    if (type === 'custom') {
+      text = `${start.getMonth()+1}/${start.getDate()} ~ ${end.getMonth()+1}/${end.getDate()}`;
+    } else if (type === 'weekly') {
       text = `${start.getMonth()+1}월 ${start.getDate()}일 ~ ${end.getMonth()+1}월 ${end.getDate()}일`;
     } else if (type === 'monthly') {
       text = `${start.getFullYear()}년 ${start.getMonth()+1}월`;
@@ -1358,6 +1366,8 @@
         let label;
         if (type === 'weekly') {
           label = weekdays[d.getDay()];
+        } else if (type === 'custom') {
+          label = `${d.getMonth()+1}/${d.getDate()}`;
         } else {
           label = `${d.getDate()}`;
         }
@@ -2132,8 +2142,44 @@
         btn.classList.add('active');
         graphState.periodType = btn.dataset.period;
         graphState.anchorDate = new Date();
-        renderGraph();
+        const isCustom = btn.dataset.period === 'custom';
+        $('customRangePicker').classList.toggle('hidden', !isCustom);
+        $('dateNav').classList.toggle('hidden', isCustom);
+        if (isCustom) {
+          // 기본값: 최근 30일
+          if (!graphState.customStart) {
+            const end = new Date();
+            const start = new Date();
+            start.setDate(end.getDate() - 30);
+            graphState.customStart = start;
+            graphState.customEnd = end;
+          }
+          const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+          $('customStartDate').value = fmt(graphState.customStart);
+          $('customEndDate').value = fmt(graphState.customEnd);
+          renderGraph();
+        } else {
+          renderGraph();
+        }
       });
+    });
+
+    // 커스텀 기간 적용
+    $('customRangeApply').addEventListener('click', () => {
+      const sv = $('customStartDate').value;
+      const ev = $('customEndDate').value;
+      if (!sv || !ev) return;
+      graphState.customStart = new Date(sv);
+      graphState.customEnd = new Date(ev);
+      if (graphState.customStart > graphState.customEnd) {
+        const tmp = graphState.customStart;
+        graphState.customStart = graphState.customEnd;
+        graphState.customEnd = tmp;
+        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        $('customStartDate').value = fmt(graphState.customStart);
+        $('customEndDate').value = fmt(graphState.customEnd);
+      }
+      renderGraph();
     });
 
     // 날짜 네비게이션
