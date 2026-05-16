@@ -1383,9 +1383,11 @@ input[type="time"] {
   position: relative;
   width: 100%;
   height: 200px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-#chartSvg, #barChartSvg {
+#chartSvg, #barChartSvg, #stackedChartSvg, #stepsChartSvg {
   width: 100%;
   height: 100%;
   display: block;
@@ -1733,6 +1735,8 @@ input[type="time"] {
 
 .stacked-chart-container {
   height: 200px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .cat-summary {

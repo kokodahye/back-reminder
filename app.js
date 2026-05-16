@@ -1419,10 +1419,22 @@
 
   function drawPainChart(points) {
     const svg = $('chartSvg');
-    const W = 360, H = 200;
+    const n = points.length;
+    const MIN_POINT_SPACE = 40;
+    const BASE_W = 360;
+    const H = 200;
     const PAD_L = 8, PAD_R = 8, PAD_T = 28, PAD_B = 28;
+    const W = n > 10 ? Math.max(BASE_W, PAD_L + PAD_R + n * MIN_POINT_SPACE) : BASE_W;
     const innerW = W - PAD_L - PAD_R;
     const innerH = H - PAD_T - PAD_B;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    if (W > BASE_W) {
+      svg.style.width = W + 'px';
+      svg.style.minWidth = W + 'px';
+    } else {
+      svg.style.width = '100%';
+      svg.style.minWidth = '';
+    }
     const yMax = 10, yMin = 0;
 
     const xAt = (i) => PAD_L + (points.length <= 1 ? innerW / 2 : (i / (points.length - 1)) * innerW);
@@ -1500,17 +1512,28 @@
       return { label: p.label, cats };
     });
 
-    const W = 360, H = 200;
+    const BASE_W = 360, H = 200;
     const PAD_L = 28, PAD_R = 8, PAD_T = 8, PAD_B = 28;
+    const n = buckets.length;
+    const MIN_BAR_SPACE = 36;
+    const W = n > 10 ? Math.max(BASE_W, PAD_L + PAD_R + n * MIN_BAR_SPACE) : BASE_W;
     const innerW = W - PAD_L - PAD_R;
     const innerH = H - PAD_T - PAD_B;
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    if (W > BASE_W) {
+      svg.style.width = W + 'px';
+      svg.style.minWidth = W + 'px';
+    } else {
+      svg.style.width = '100%';
+      svg.style.minWidth = '';
+    }
 
     // y축 max (각 날짜의 4카테고리 합산 중 최대)
     const maxTotal = Math.max(...buckets.map((b) => BAR_CATEGORIES.reduce((s, c) => s + b.cats[c], 0)), 1);
     const yMax = Math.ceil(maxTotal / 2) * 2 || 2;
     const yAt = (v) => PAD_T + innerH - (v / yMax) * innerH;
 
-    const n = buckets.length;
     const barW = Math.max(12, Math.min(36, (innerW / n) * 0.65));
     const gap = (innerW - barW * n) / (n + 1);
 
@@ -1638,16 +1661,27 @@
       return;
     }
 
-    const W = 360, H = 200;
+    const BASE_W = 360, H = 200;
     const PAD_L = 8, PAD_R = 8, PAD_T = 12, PAD_B = 28;
+    const n = buckets.length;
+    const MIN_BAR_SPACE = 36;
+    const W = n > 10 ? Math.max(BASE_W, PAD_L + PAD_R + n * MIN_BAR_SPACE) : BASE_W;
     const innerW = W - PAD_L - PAD_R;
     const innerH = H - PAD_T - PAD_B;
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    if (W > BASE_W) {
+      svg.style.width = W + 'px';
+      svg.style.minWidth = W + 'px';
+    } else {
+      svg.style.width = '100%';
+      svg.style.minWidth = '';
+    }
 
     const maxVal = Math.max(...buckets.map((b) => b.value), 1);
     const yMax = Math.ceil(maxVal / 1000) * 1000 || 1000;
     const yAt = (v) => PAD_T + innerH - (v / yMax) * innerH;
 
-    const n = buckets.length;
     const barW = Math.max(10, Math.min(32, (innerW / n) * 0.6));
     const gap = (innerW - barW * n) / (n + 1);
 
