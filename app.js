@@ -1361,6 +1361,8 @@
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         const rec = records[key];
+        // 기간 모드: 데이터 있는 날만 표시
+        if (type === 'custom' && !rec) continue;
         const painVal = rec && typeof rec.painScore === 'number' ? rec.painScore : null;
         const actTotal = rec ? (rec.activities || []).reduce((s, a) => s + (a.minutes || 0), 0) : 0;
         let label;
