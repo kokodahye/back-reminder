@@ -1088,7 +1088,7 @@
     return 'bad';
   }
 
-  function painScoreHex(score) {
+  function painScoreHex(score, darken) {
     // 슬라이더 그라데이션과 동일: 0=#c0392b → 5=#f5d76e → 10=#99cc66
     const stops = [
       { at: 0, r: 0xc0, g: 0x39, b: 0x2b },
@@ -1103,9 +1103,10 @@
       }
     }
     const t = lo.at === hi.at ? 0 : (s - lo.at) / (hi.at - lo.at);
-    const r = Math.round(lo.r + (hi.r - lo.r) * t);
-    const g = Math.round(lo.g + (hi.g - lo.g) * t);
-    const b = Math.round(lo.b + (hi.b - lo.b) * t);
+    const k = darken ? 0.6 : 1;  // 텍스트용 진한 버전
+    const r = Math.round((lo.r + (hi.r - lo.r) * t) * k);
+    const g = Math.round((lo.g + (hi.g - lo.g) * t) * k);
+    const b = Math.round((lo.b + (hi.b - lo.b) * t) * k);
     return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
   }
 
@@ -1506,11 +1507,12 @@
     // 데이터 점 + 값 라벨 (점수별 색상)
     validPoints.forEach((p) => {
       const dotColor = painScoreHex(p.painValue);
+      const textColor = painScoreHex(p.painValue, true);
       // 점
       svgContent += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${dotColor}" stroke="#fff" stroke-width="2"/>`;
-      // 값 라벨 (모든 포인트에 표시)
+      // 값 라벨 (진한 색상으로 가독성 확보)
       const labelY = p.y - 12;
-      svgContent += `<text x="${p.x}" y="${labelY}" text-anchor="middle" fill="${dotColor}" font-size="12" font-weight="700">${p.painValue}</text>`;
+      svgContent += `<text x="${p.x}" y="${labelY}" text-anchor="middle" fill="${textColor}" font-size="12" font-weight="800">${p.painValue}</text>`;
     });
 
     svg.innerHTML = svgContent;
