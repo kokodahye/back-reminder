@@ -1326,12 +1326,9 @@
       end = graphState.customEnd || new Date();
       return { start, end };
     } else if (type === 'weekly') {
-      const day = anchor.getDay();
-      const diff = day === 0 ? 6 : day - 1; // 월요일 시작
+      end = new Date(anchor);
       start = new Date(anchor);
-      start.setDate(anchor.getDate() - diff);
-      end = new Date(start);
-      end.setDate(start.getDate() + 6);
+      start.setDate(anchor.getDate() - 6); // 오늘부터 7일간
     } else if (type === 'monthly') {
       start = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
       end = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
