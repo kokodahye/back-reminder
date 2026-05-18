@@ -731,35 +731,63 @@ input[type="time"] {
   color: var(--text-sub);
 }
 
-.pain-slider {
+.score-section-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: -4px;
+}
+
+.score-divider {
+  height: 1px;
+  background: #ebeae3;
+  margin: 14px 0 10px;
+}
+
+.pain-slider, .leg-slider {
   width: 100%;
   margin: 16px 0 4px;
   height: 8px;
   -webkit-appearance: none;
   appearance: none;
-  background: linear-gradient(to right, var(--danger) 0%, #f5d76e 50%, var(--primary) 100%);
   border-radius: 999px;
   outline: none;
 }
 
-.pain-slider::-webkit-slider-thumb {
+.pain-slider {
+  background: linear-gradient(to right, var(--danger) 0%, #f5d76e 50%, var(--primary) 100%);
+}
+
+.leg-slider {
+  background: linear-gradient(to right, var(--danger) 0%, #c49bdb 50%, #5B9BD5 100%);
+}
+
+.pain-slider::-webkit-slider-thumb,
+.leg-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 24px;
   height: 24px;
   border-radius: 50%;
   background: #fff;
-  border: 3px solid var(--primary);
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.pain-slider::-moz-range-thumb {
+.pain-slider::-webkit-slider-thumb {
+  border: 3px solid var(--primary);
+}
+
+.leg-slider::-webkit-slider-thumb {
+  border: 3px solid #5B9BD5;
+}
+
+.pain-slider::-moz-range-thumb,
+.leg-slider::-moz-range-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
   background: #fff;
-  border: 3px solid var(--primary);
   cursor: pointer;
 }
 
@@ -1356,6 +1384,36 @@ input[type="time"] {
   margin-bottom: 8px;
 }
 
+.pain-chart-legend {
+  display: flex;
+  gap: 16px;
+  padding: 0 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pain-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pain-legend-line {
+  display: inline-block;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.pain-legend-line.back-line {
+  background: #99cc66;
+}
+
+.pain-legend-line.leg-line {
+  background: #5B9BD5;
+}
+
 .chart-title {
   font-size: 15px;
   font-weight: 700;
@@ -1520,8 +1578,13 @@ input[type="time"] {
   font-weight: 600;
 }
 
+.record-scores {
+  display: flex;
+  gap: 8px;
+}
+
 .record-pain {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 }
 

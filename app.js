@@ -1068,6 +1068,7 @@
     const records = loadHealthRecords();
     return records[healthSelectedDate] || {
       painScore: 7,
+      legScore: 7,
       activities: [],
       period: false,
       note: ''
@@ -1088,13 +1089,7 @@
     return 'bad';
   }
 
-  function painScoreHex(score, darken) {
-    // 슬라이더 그라데이션과 동일: 0=#c0392b → 5=#f5d76e → 10=#99cc66
-    const stops = [
-      { at: 0, r: 0xc0, g: 0x39, b: 0x2b },
-      { at: 5, r: 0xf5, g: 0xd7, b: 0x6e },
-      { at: 10, r: 0x99, g: 0xcc, b: 0x66 }
-    ];
+  function scoreGradientHex(score, stops, darken) {
     const s = Math.max(0, Math.min(10, score));
     let lo = stops[0], hi = stops[stops.length - 1];
     for (let i = 0; i < stops.length - 1; i++) {
@@ -1103,11 +1098,30 @@
       }
     }
     const t = lo.at === hi.at ? 0 : (s - lo.at) / (hi.at - lo.at);
-    const k = darken ? 0.6 : 1;  // 텍스트용 진한 버전
+    const k = darken ? 0.6 : 1;
     const r = Math.round((lo.r + (hi.r - lo.r) * t) * k);
     const g = Math.round((lo.g + (hi.g - lo.g) * t) * k);
     const b = Math.round((lo.b + (hi.b - lo.b) * t) * k);
     return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+  }
+
+  const BACK_STOPS = [
+    { at: 0, r: 0xc0, g: 0x39, b: 0x2b },
+    { at: 5, r: 0xf5, g: 0xd7, b: 0x6e },
+    { at: 10, r: 0x99, g: 0xcc, b: 0x66 }
+  ];
+  const LEG_STOPS = [
+    { at: 0, r: 0xc0, g: 0x39, b: 0x2b },
+    { at: 5, r: 0xc4, g: 0x9b, b: 0xdb },
+    { at: 10, r: 0x5b, g: 0x9b, b: 0xd5 }
+  ];
+
+  function painScoreHex(score, darken) {
+    return scoreGradientHex(score, BACK_STOPS, darken);
+  }
+
+  function legScoreHex(score, darken) {
+    return scoreGradientHex(score, LEG_STOPS, darken);
   }
 
   // ---- View / Tab Switching ----
@@ -1150,6 +1164,9 @@
     const range = $('painScoreRange');
     range.value = rec.painScore;
     updatePainDisplay(rec.painScore);
+    const legRange = $('legScoreRange');
+    legRange.value = typeof rec.legScore === 'number' ? rec.legScore : 7;
+    updateLegDisplay(legRange.value);
     $('periodCheck').checked = !!rec.period;
     $('checkNote').value = rec.note || '';
     // 비타민 체크 로드
@@ -1168,11 +1185,13 @@
   function updatePainDisplay(score) {
     $('painScoreBig').textContent = score;
     $('painScoreLabel').textContent = painScoreLabel(score);
-    // 색상도 변경
-    let color = 'var(--primary)';
-    if (score < 4) color = 'var(--danger)';
-    else if (score < 7) color = '#d4a017';
-    $('painScoreBig').style.color = color;
+    $('painScoreBig').style.color = painScoreHex(score, true);
+  }
+
+  function updateLegDisplay(score) {
+    $('legScoreBig').textContent = score;
+    $('legScoreLabel').textContent = painScoreLabel(score);
+    $('legScoreBig').style.color = legScoreHex(score, true);
   }
 
   function renderActivityList(activities) {
@@ -1285,6 +1304,7 @@
     });
     const rec = {
       painScore: parseInt($('painScoreRange').value),
+      legScore: parseInt($('legScoreRange').value),
       activities: getSelectedRecord().activities || [],
       period: $('periodCheck').checked,
       vitamins: vitamins,
@@ -1357,7 +1377,7 @@
       for (let m = 0; m < 12; m++) {
         const monthStart = new Date(start.getFullYear(), m, 1);
         const monthEnd = new Date(start.getFullYear(), m + 1, 0);
-        let sum = 0, count = 0, actSum = 0, actCount = 0;
+        let sum = 0, count = 0, legSum = 0, legCount = 0, actSum = 0, actCount = 0;
         const allRecs = [];
         for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
           const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -1365,6 +1385,7 @@
           if (rec) {
             allRecs.push(rec);
             if (typeof rec.painScore === 'number') { sum += rec.painScore; count++; }
+            if (typeof rec.legScore === 'number') { legSum += rec.legScore; legCount++; }
             const total = (rec.activities || []).reduce((s, a) => s + (a.minutes || 0), 0);
             if (total > 0) { actSum += total; actCount++; }
           }
@@ -1373,6 +1394,7 @@
           date: monthStart,
           label: `${m+1}월`,
           painValue: count > 0 ? Math.round(sum / count * 10) / 10 : null,
+          legValue: legCount > 0 ? Math.round(legSum / legCount * 10) / 10 : null,
           actValue: actCount > 0 ? Math.round(actSum / actCount) : null,
           records: allRecs
         });
@@ -1385,6 +1407,7 @@
         // 기간 모드: 데이터 있는 날만 표시
         if (type === 'custom' && !rec) continue;
         const painVal = rec && typeof rec.painScore === 'number' ? rec.painScore : null;
+        const legVal = rec && typeof rec.legScore === 'number' ? rec.legScore : null;
         const actTotal = rec ? (rec.activities || []).reduce((s, a) => s + (a.minutes || 0), 0) : 0;
         let label;
         if (type === 'weekly') {
@@ -1399,6 +1422,7 @@
           key,
           label,
           painValue: painVal,
+          legValue: legVal,
           actValue: actTotal > 0 ? actTotal : null,
           record: rec || null,
           records: rec ? [rec] : []
@@ -1414,16 +1438,26 @@
     updateDateRangeLabel();
 
     // 통증 차트
-    const hasData = points.some((p) => p.painValue !== null);
+    const hasData = points.some((p) => p.painValue !== null || p.legValue !== null);
     $('chartEmpty').classList.toggle('hidden', hasData);
     drawPainChart(points);
-    const valid = points.filter((p) => p.painValue !== null);
-    if (valid.length > 0) {
-      const avg = valid.reduce((s, p) => s + p.painValue, 0) / valid.length;
+    // 허리 평균
+    const validBack = points.filter((p) => p.painValue !== null);
+    if (validBack.length > 0) {
+      const avg = validBack.reduce((s, p) => s + p.painValue, 0) / validBack.length;
       const avgColor = painScoreHex(Math.round(avg), true);
-      $('chartAvg').innerHTML = `평균 <strong style="color:${avgColor}">${avg.toFixed(1)}</strong> 점`;
+      $('chartAvg').innerHTML = `<strong style="color:${avgColor}">${avg.toFixed(1)}</strong>점`;
     } else {
       $('chartAvg').innerHTML = '';
+    }
+    // 다리 평균
+    const validLeg = points.filter((p) => p.legValue !== null);
+    if (validLeg.length > 0) {
+      const avg = validLeg.reduce((s, p) => s + p.legValue, 0) / validLeg.length;
+      const avgColor = legScoreHex(Math.round(avg), true);
+      $('legChartAvg').innerHTML = `<strong style="color:${avgColor}">${avg.toFixed(1)}</strong>점`;
+    } else {
+      $('legChartAvg').innerHTML = '';
     }
 
     // 공통 포인트
@@ -1463,11 +1497,19 @@
     const xAt = (i) => PAD_L + (points.length <= 1 ? innerW / 2 : (i / (points.length - 1)) * innerW);
     const yAt = (v) => PAD_T + innerH - ((v - yMin) / (yMax - yMin)) * innerH;
 
-    const dataPoints = points.map((p, i) => ({
+    // 허리 데이터
+    const backPoints = points.map((p, i) => ({
       ...p, i, x: xAt(i),
       y: p.painValue !== null ? yAt(p.painValue) : null
     }));
-    const validPoints = dataPoints.filter((p) => p.y !== null);
+    const validBack = backPoints.filter((p) => p.y !== null);
+
+    // 다리 데이터
+    const legPoints = points.map((p, i) => ({
+      ...p, i, x: xAt(i),
+      y: p.legValue !== null ? yAt(p.legValue) : null
+    }));
+    const validLeg = legPoints.filter((p) => p.y !== null);
 
     // smooth path
     function smoothPath(pts) {
@@ -1487,31 +1529,44 @@
 
     let svgContent = '';
 
-    // 기준선 (얇은 점선)
+    // 기준선
     const baseLine = yAt(0);
     svgContent += `<line x1="${PAD_L}" y1="${baseLine}" x2="${W - PAD_R}" y2="${baseLine}" stroke="#e2e6dc" stroke-width="1"/>`;
 
-    // 라인
-    const linePath = smoothPath(validPoints);
-    if (linePath) {
-      svgContent += `<path d="${linePath}" fill="none" stroke="#c5c9b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    // 허리 라인
+    const backPath = smoothPath(validBack);
+    if (backPath) {
+      svgContent += `<path d="${backPath}" fill="none" stroke="#c5c9b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }
+
+    // 다리 라인 (점선)
+    const legPath = smoothPath(validLeg);
+    if (legPath) {
+      svgContent += `<path d="${legPath}" fill="none" stroke="#b0c8d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6,3"/>`;
     }
 
     // x축 라벨
     const labelStep = points.length > 12 ? Math.ceil(points.length / 10) : 1;
-    dataPoints.forEach((p, i) => {
+    backPoints.forEach((p, i) => {
       if (i % labelStep === 0 || i === points.length - 1) {
         svgContent += `<text x="${p.x}" y="${H - 6}" text-anchor="middle" fill="var(--text-sub)" font-size="11" font-weight="500">${p.label}</text>`;
       }
     });
 
-    // 데이터 점 + 값 라벨 (점수별 색상)
-    validPoints.forEach((p) => {
+    // 다리 점 + 값 라벨 (먼저 그려서 허리가 위에 오도록)
+    validLeg.forEach((p) => {
+      const dotColor = legScoreHex(p.legValue);
+      const textColor = legScoreHex(p.legValue, true);
+      svgContent += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${dotColor}" stroke="#fff" stroke-width="1.5"/>`;
+      const labelY = p.y + 16;
+      svgContent += `<text x="${p.x}" y="${labelY}" text-anchor="middle" fill="${textColor}" font-size="10" font-weight="700">${p.legValue}</text>`;
+    });
+
+    // 허리 점 + 값 라벨 (위에 표시)
+    validBack.forEach((p) => {
       const dotColor = painScoreHex(p.painValue);
       const textColor = painScoreHex(p.painValue, true);
-      // 점
       svgContent += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${dotColor}" stroke="#fff" stroke-width="2"/>`;
-      // 값 라벨 (진한 색상으로 가독성 확보)
       const labelY = p.y - 12;
       svgContent += `<text x="${p.x}" y="${labelY}" text-anchor="middle" fill="${textColor}" font-size="12" font-weight="800">${p.painValue}</text>`;
     });
@@ -1765,6 +1820,8 @@
       const r = p.record;
       const score = typeof r.painScore === 'number' ? r.painScore : '-';
       const scoreClass = typeof r.painScore === 'number' ? painScoreColor(r.painScore) : '';
+      const legScore = typeof r.legScore === 'number' ? r.legScore : '-';
+      const legClass = typeof r.legScore === 'number' ? painScoreColor(r.legScore) : '';
       const totalMin = (r.activities || []).reduce((s, a) => s + a.minutes, 0);
       const meta = [];
       if (totalMin > 0) {
@@ -1791,7 +1848,10 @@
         <div class="record-item">
           <div class="record-head">
             <span class="record-date">${m}/${d} (${wd[p.date.getDay()]})${r.period ? '🩸' : ''}</span>
-            <span class="record-pain ${scoreClass}">${score === '-' ? '-' : score + '점'}</span>
+            <span class="record-scores">
+              <span class="record-pain ${scoreClass}">허리 ${score === '-' ? '-' : score}</span>
+              <span class="record-pain ${legClass}">다리 ${legScore === '-' ? '-' : legScore}</span>
+            </span>
           </div>
           ${meta.length > 0 ? `<div class="record-meta">${meta.join(' · ')}</div>` : ''}
           ${vitHtml}
@@ -2113,14 +2173,23 @@
       btn.addEventListener('click', () => switchView(btn.dataset.view));
     });
 
-    // 통증 슬라이더
+    // 허리 통증 슬라이더
     const range = $('painScoreRange');
     range.addEventListener('input', () => {
       const v = parseInt(range.value);
       updatePainDisplay(v);
-      // 자동 저장 (실시간)
       const today = getSelectedRecord();
       today.painScore = v;
+      saveSelectedRecord(today);
+    });
+
+    // 다리 통증 슬라이더
+    const legRange = $('legScoreRange');
+    legRange.addEventListener('input', () => {
+      const v = parseInt(legRange.value);
+      updateLegDisplay(v);
+      const today = getSelectedRecord();
+      today.legScore = v;
       saveSelectedRecord(today);
     });
 

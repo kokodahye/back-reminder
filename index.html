@@ -116,11 +116,25 @@
             <div class="check-date" id="checkDateLabel">오늘</div>
             <button id="dateEditBtn" class="date-edit-btn">날짜수정</button>
           </div>
+          <div class="score-section-label">🦴 허리</div>
           <div class="check-pain-display">
             <div class="pain-score-big" id="painScoreBig">7</div>
             <div class="pain-score-label" id="painScoreLabel">괜찮음</div>
           </div>
           <input type="range" id="painScoreRange" min="0" max="10" step="1" value="7" class="pain-slider">
+          <div class="pain-scale">
+            <span>아주 아픔</span>
+            <span>아주 좋음</span>
+          </div>
+
+          <div class="score-divider"></div>
+
+          <div class="score-section-label">🦵 다리</div>
+          <div class="check-pain-display">
+            <div class="pain-score-big" id="legScoreBig">7</div>
+            <div class="pain-score-label" id="legScoreLabel">괜찮음</div>
+          </div>
+          <input type="range" id="legScoreRange" min="0" max="10" step="1" value="7" class="leg-slider">
           <div class="pain-scale">
             <span>아주 아픔</span>
             <span>아주 좋음</span>
@@ -218,8 +232,11 @@
         <!-- Pain Score Chart -->
         <div class="chart-card" id="painChartCard">
           <div class="chart-header">
-            <span class="chart-title" id="chartTitle">허리 상태 <span class="chart-title-sub">(0~10점)</span></span>
-            <span class="chart-avg" id="chartAvg">평균 <strong>0</strong> 점</span>
+            <span class="chart-title" id="chartTitle">통증 상태 <span class="chart-title-sub">(0~10점)</span></span>
+          </div>
+          <div class="pain-chart-legend">
+            <span class="pain-legend-item"><span class="pain-legend-line back-line"></span>허리 <span class="chart-avg" id="chartAvg"></span></span>
+            <span class="pain-legend-item"><span class="pain-legend-line leg-line"></span>다리 <span class="chart-avg" id="legChartAvg"></span></span>
           </div>
           <div id="chartContainer" class="chart-container">
             <svg id="chartSvg" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet"></svg>
