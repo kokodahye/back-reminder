@@ -238,9 +238,12 @@
             <span class="pain-legend-item"><span class="pain-legend-line back-line"></span>허리 <span class="chart-avg" id="chartAvg"></span></span>
             <span class="pain-legend-item"><span class="pain-legend-line leg-line"></span>다리 <span class="chart-avg" id="legChartAvg"></span></span>
           </div>
-          <div id="chartContainer" class="chart-container">
-            <svg id="chartSvg" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet"></svg>
-            <div id="chartEmpty" class="chart-empty hidden">기록이 없습니다.<br>오늘 체크를 먼저 입력해보세요.</div>
+          <div class="chart-y-wrapper">
+            <svg id="painYAxis" class="y-axis-svg" viewBox="0 0 30 200"></svg>
+            <div id="chartContainer" class="chart-container">
+              <svg id="chartSvg" viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet"></svg>
+              <div id="chartEmpty" class="chart-empty hidden">기록이 없습니다.<br>오늘 체크를 먼저 입력해보세요.</div>
+            </div>
           </div>
         </div>
 

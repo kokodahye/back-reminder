@@ -1477,7 +1477,7 @@
     const MIN_POINT_SPACE = 40;
     const BASE_W = 360;
     const H = 200;
-    const PAD_L = 8, PAD_R = 8, PAD_T = 28, PAD_B = 28;
+    const PAD_L = 4, PAD_R = 8, PAD_T = 20, PAD_B = 28;
     const W = n > 10 ? Math.max(BASE_W, PAD_L + PAD_R + n * MIN_POINT_SPACE) : BASE_W;
     const innerW = W - PAD_L - PAD_R;
     const innerH = H - PAD_T - PAD_B;
@@ -1493,6 +1493,17 @@
 
     const xAt = (i) => PAD_L + (points.length <= 1 ? innerW / 2 : (i / (points.length - 1)) * innerW);
     const yAt = (v) => PAD_T + innerH - ((v - yMin) / (yMax - yMin)) * innerH;
+
+    // Y축 라벨 (별도 고정 SVG)
+    const painYAxis = $('painYAxis');
+    if (painYAxis) {
+      let yAxisContent = '';
+      for (let t = 0; t <= 10; t += 2) {
+        const y = yAt(t);
+        yAxisContent += `<text x="24" y="${y + 4}" text-anchor="end" fill="var(--text-sub)" font-size="10" font-weight="500">${t}</text>`;
+      }
+      painYAxis.innerHTML = yAxisContent;
+    }
 
     // 허리 데이터
     const backPoints = points.map((p, i) => ({
@@ -1526,9 +1537,11 @@
 
     let svgContent = '';
 
-    // 기준선
-    const baseLine = yAt(0);
-    svgContent += `<line x1="${PAD_L}" y1="${baseLine}" x2="${W - PAD_R}" y2="${baseLine}" stroke="#e2e6dc" stroke-width="1"/>`;
+    // y축 그리드 라인
+    for (let t = 0; t <= 10; t += 2) {
+      const y = yAt(t);
+      svgContent += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="#ebeae3" stroke-width="1"/>`;
+    }
 
     // 허리 라인
     const backPath = smoothPath(validBack);
@@ -1550,22 +1563,58 @@
       }
     });
 
-    // 다리 점 + 값 라벨 (먼저 그려서 허리가 위에 오도록)
-    validLeg.forEach((p) => {
-      const dotColor = legScoreHex(p.legValue);
-      const textColor = legScoreHex(p.legValue, true);
-      svgContent += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${dotColor}" stroke="#fff" stroke-width="1.5"/>`;
-      const labelY = p.y + 16;
-      svgContent += `<text x="${p.x}" y="${labelY}" text-anchor="middle" fill="${textColor}" font-size="10" font-weight="700">${p.legValue}</text>`;
-    });
+    // 점 + 값 라벨 (겹침 방지 로직)
+    points.forEach((p, i) => {
+      const bk = backPoints[i];
+      const lg = legPoints[i];
+      const hasBack = bk.y !== null;
+      const hasLeg = lg.y !== null;
 
-    // 허리 점 + 값 라벨 (위에 표시)
-    validBack.forEach((p) => {
-      const dotColor = painScoreHex(p.painValue);
-      const textColor = painScoreHex(p.painValue, true);
-      svgContent += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${dotColor}" stroke="#fff" stroke-width="2"/>`;
-      const labelY = p.y - 12;
-      svgContent += `<text x="${p.x}" y="${labelY}" text-anchor="middle" fill="${textColor}" font-size="12" font-weight="800">${p.painValue}</text>`;
+      if (hasBack && hasLeg) {
+        const diff = Math.abs(p.painValue - p.legValue);
+        if (diff === 0) {
+          // 같은 값: 점 하나 + 결합 라벨
+          const dotColor = painScoreHex(p.painValue);
+          svgContent += `<circle cx="${bk.x}" cy="${bk.y}" r="5" fill="${dotColor}" stroke="#fff" stroke-width="2"/>`;
+          const textColor = painScoreHex(p.painValue, true);
+          svgContent += `<text x="${bk.x}" y="${bk.y - 10}" text-anchor="middle" fill="${textColor}" font-size="11" font-weight="800">${p.painValue}</text>`;
+        } else if (diff <= 2) {
+          // 가까운 값: 라벨을 좌/우로 분산
+          // 다리 점
+          const legDotColor = legScoreHex(p.legValue);
+          const legTextColor = legScoreHex(p.legValue, true);
+          svgContent += `<circle cx="${lg.x}" cy="${lg.y}" r="4" fill="${legDotColor}" stroke="#fff" stroke-width="1.5"/>`;
+          svgContent += `<text x="${lg.x + 14}" y="${lg.y + 4}" text-anchor="start" fill="${legTextColor}" font-size="10" font-weight="700">${p.legValue}</text>`;
+          // 허리 점
+          const backDotColor = painScoreHex(p.painValue);
+          const backTextColor = painScoreHex(p.painValue, true);
+          svgContent += `<circle cx="${bk.x}" cy="${bk.y}" r="5" fill="${backDotColor}" stroke="#fff" stroke-width="2"/>`;
+          svgContent += `<text x="${bk.x - 14}" y="${bk.y + 4}" text-anchor="end" fill="${backTextColor}" font-size="11" font-weight="800">${p.painValue}</text>`;
+        } else {
+          // 먼 값: 기본 위/아래
+          const legDotColor = legScoreHex(p.legValue);
+          const legTextColor = legScoreHex(p.legValue, true);
+          svgContent += `<circle cx="${lg.x}" cy="${lg.y}" r="4" fill="${legDotColor}" stroke="#fff" stroke-width="1.5"/>`;
+          svgContent += `<text x="${lg.x}" y="${lg.y + 16}" text-anchor="middle" fill="${legTextColor}" font-size="10" font-weight="700">${p.legValue}</text>`;
+          const backDotColor = painScoreHex(p.painValue);
+          const backTextColor = painScoreHex(p.painValue, true);
+          svgContent += `<circle cx="${bk.x}" cy="${bk.y}" r="5" fill="${backDotColor}" stroke="#fff" stroke-width="2"/>`;
+          svgContent += `<text x="${bk.x}" y="${bk.y - 10}" text-anchor="middle" fill="${backTextColor}" font-size="11" font-weight="800">${p.painValue}</text>`;
+        }
+      } else {
+        if (hasLeg) {
+          const dotColor = legScoreHex(p.legValue);
+          const textColor = legScoreHex(p.legValue, true);
+          svgContent += `<circle cx="${lg.x}" cy="${lg.y}" r="4" fill="${dotColor}" stroke="#fff" stroke-width="1.5"/>`;
+          svgContent += `<text x="${lg.x}" y="${lg.y - 10}" text-anchor="middle" fill="${textColor}" font-size="10" font-weight="700">${p.legValue}</text>`;
+        }
+        if (hasBack) {
+          const dotColor = painScoreHex(p.painValue);
+          const textColor = painScoreHex(p.painValue, true);
+          svgContent += `<circle cx="${bk.x}" cy="${bk.y}" r="5" fill="${dotColor}" stroke="#fff" stroke-width="2"/>`;
+          svgContent += `<text x="${bk.x}" y="${bk.y - 10}" text-anchor="middle" fill="${textColor}" font-size="11" font-weight="800">${p.painValue}</text>`;
+        }
+      }
     });
 
     svg.innerHTML = svgContent;
