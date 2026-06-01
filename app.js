@@ -1161,6 +1161,9 @@
   // ---- Today Check UI ----
   function loadTodayCheckUI() {
     const rec = getSelectedRecord();
+    const parts = healthSelectedDate.split('-');
+    const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+
     const range = $('painScoreRange');
     range.value = rec.painScore;
     updatePainDisplay(rec.painScore);
@@ -1169,6 +1172,14 @@
     updateLegDisplay(legRange.value);
     $('periodCheck').checked = !!rec.period;
     $('checkNote').value = rec.note || '';
+
+    // 비타민 D: 2일에 한번 표시 (기준일: 2026-05-18 = 표시일)
+    const vitDRef = new Date(2026, 4, 18);
+    const diffDays = Math.round((d - vitDRef) / (1000 * 60 * 60 * 24));
+    const showVitD = diffDays % 2 === 0;
+    const vitDItem = $('vitDItem');
+    if (vitDItem) vitDItem.style.display = showVitD ? '' : 'none';
+
     // 비타민 체크 로드
     const vit = rec.vitamins || {};
     document.querySelectorAll('.vitamin-check').forEach((cb) => {
@@ -1176,8 +1187,6 @@
     });
     renderActivityList(rec.activities || []);
 
-    const parts = healthSelectedDate.split('-');
-    const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
     const wd = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
     $('checkDateLabel').textContent = `${d.getMonth() + 1}월 ${d.getDate()}일 (${wd})`;
   }
